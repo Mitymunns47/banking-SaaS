@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transfer Money | CORE BANKING SYSTEM</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="bank-header">
+    <div class="nav-container">
+      <a href="{{ url_for('main.customer_dashboard') }}" class="bank-brand">
+        <div class="bank-logo-icon">B</div>
+        <div>
+          <div class="bank-brand-title">CORE BANKING SYSTEM</div>
+          <div class="bank-brand-tagline">Online Banking &bull; Customer Portal</div>
+        </div>
+      </a>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="{{ url_for('main.customer_dashboard') }}" class="nav-link">Dashboard</a></li>
+          <li><a href="{{ url_for('main.deposit') }}" class="nav-link">Deposit</a></li>
+          <li><a href="{{ url_for('main.withdraw') }}" class="nav-link">Withdraw</a></li>
+          <li><a href="{{ url_for('main.transfer') }}" class="nav-link active">Transfer</a></li>
+          <li><a href="{{ url_for('main.transactions') }}" class="nav-link">Transactions</a></li>
+          <li><a href="{{ url_for('main.customer_loans') }}" class="nav-link">Loans</a></li>
+          <li><a href="{{ url_for('main.customer_cheques') }}" class="nav-link">Cheque Book</a></li>
+          <li><a href="{{ url_for('main.change_password') }}" class="nav-link">Security</a></li>
+          <li><a href="{{ url_for('main.customer_logout') }}" class="nav-link nav-logout">Sign Out</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="page-container">
+    <div class="auth-wrapper">
+
+      <div class="auth-card">
+        <div class="auth-header">
+          <span class="auth-badge customer-badge">Inter-Account Transfer</span>
+          <h1 class="auth-title">Money Transfer</h1>
+          <p class="auth-subtitle">Send funds instantly to another registered bank customer.</p>
+        </div>
+
+        <!-- Account Balance Info Box -->
+        <div class="mini-balance-box">
+          <div>
+            <div class="mini-label">From: <strong>{{ customer.account_number }}</strong></div>
+            <div class="mini-type">{{ customer.name }}</div>
+          </div>
+          <div style="text-align: right;">
+            <div class="mini-label">Available Balance</div>
+            <div class="mini-balance">{{ format_currency(customer.balance) }}</div>
+          </div>
+        </div>
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ 'success' if category == 'success' else 'error' if category == 'danger' or category == 'error' else 'warning' if category == 'warning' else 'info' }}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- Error Alert -->
+        {% if error_message %}
+          <div class="alert alert-error">
+            <strong>⚠️ Transfer Failed:</strong> {{ error_message }}
+          </div>
+        {% endif %}
+
+        {% if not customer.is_active or customer.account_status != 'Active' %}
+          <div class="alert alert-warning">
+            <strong>⚠️ Account Status:</strong> Your account is currently <em>{{ customer.account_status }}</em>. Outgoing transfers cannot be performed on restricted or pending accounts.
+          </div>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('main.transfer') }}" class="auth-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="form-group">
+            <label class="form-label" for="recipient_account">Recipient Account Number *</label>
+            <input 
+              type="text" 
+              id="recipient_account" 
+              name="recipient_account" 
+              class="form-input" 
+              placeholder="e.g. ACC-1003882" 
+              value="{{ recipient_account }}" 
+              required 
+              autofocus
+            >
+            <span class="form-hint">Enter the recipient's complete account identifier (e.g., ACC-1003882).</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="amount">Transfer Amount ($ USD) *</label>
+            <input 
+              type="number" 
+              step="0.01" 
+              min="0.01" 
+              id="amount" 
+              name="amount" 
+              class="form-input" 
+              placeholder="e.g. 250.00" 
+              value="{{ entered_amount }}" 
+              required
+            >
+            <span class="form-hint">Transfer amount cannot exceed your available balance of {{ format_currency(customer.balance) }}.</span>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block">
+            Confirm &amp; Send Transfer &rarr;
+          </button>
+        </form>
+
+        <div class="auth-footer">
+          <a href="{{ url_for('main.customer_dashboard') }}">&larr; Return to Dashboard</a>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bank-footer">
+    <div class="nav-container" style="justify-content: center;">
+      <p><strong>CORE BANKING SYSTEM</strong> &bull; Secure Financial Processing</p>
+    </div>
+  </footer>
+
+</body>
+</html>

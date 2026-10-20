@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ error_code }} - {{ error_title }} | CORE BANKING SYSTEM</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="bank-header">
+    <div class="nav-container">
+      <a href="{{ url_for('main.index') }}" class="bank-brand">
+        <div class="bank-logo-icon">B</div>
+        <div>
+          <div class="bank-brand-title">CORE BANKING SYSTEM</div>
+          <div class="bank-brand-tagline">Secure Financial Portal</div>
+        </div>
+      </a>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="{{ url_for('main.index') }}" class="nav-link">Home</a></li>
+          {% if session.get('role') == 'customer' %}
+            <li><a href="{{ url_for('main.customer_dashboard') }}" class="nav-link">Dashboard</a></li>
+            <li><a href="{{ url_for('main.customer_logout') }}" class="nav-link nav-logout">Sign Out</a></li>
+          {% elif session.get('role') == 'admin' %}
+            <li><a href="{{ url_for('main.admin_dashboard') }}" class="nav-link">Admin Console</a></li>
+            <li><a href="{{ url_for('main.admin_logout') }}" class="nav-link nav-logout">Sign Out</a></li>
+          {% else %}
+            <li><a href="{{ url_for('main.customer_login') }}" class="nav-link">Customer Login</a></li>
+            <li><a href="{{ url_for('main.admin_login') }}" class="nav-link">Admin Portal</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="page-container" style="max-width: 680px; margin: 3rem auto; text-align: center;">
+    <div class="card" style="padding: 2.5rem 2rem; border-top: 4px solid var(--color-accent); box-shadow: var(--shadow-md);">
+      <div style="font-size: 3.5rem; margin-bottom: 0.5rem; line-height: 1;">
+        {% if error_code == 404 %}🔍{% elif error_code == 403 %}🛡️{% else %}⚠️{% endif %}
+      </div>
+      <h1 style="font-size: 2.2rem; font-weight: 800; color: var(--color-primary); margin-bottom: 0.5rem;">
+        {{ error_code }} &mdash; {{ error_title }}
+      </h1>
+      <p style="color: var(--color-text-muted); font-size: 1rem; margin-bottom: 1.75rem; line-height: 1.6;">
+        {{ error_message or "The requested resource could not be found or processed safely." }}
+      </p>
+
+      <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
+        {% if session.get('role') == 'customer' %}
+          <a href="{{ url_for('main.customer_dashboard') }}" class="btn btn-primary">
+            Return to Customer Dashboard &rarr;
+          </a>
+        {% elif session.get('role') == 'admin' %}
+          <a href="{{ url_for('main.admin_dashboard') }}" class="btn btn-admin">
+            Return to Admin Console &rarr;
+          </a>
+        {% else %}
+          <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+            Return to Homepage
+          </a>
+          <a href="{{ url_for('main.customer_login') }}" class="btn btn-outline">
+            Customer Login
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bank-footer">
+    <div class="container footer-content" style="justify-content: center;">
+      <div>
+        <strong>CORE BANKING SYSTEM</strong> &mdash; Educational Core Banking Simulation
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

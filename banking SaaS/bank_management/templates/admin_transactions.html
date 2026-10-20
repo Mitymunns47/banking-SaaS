@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transaction Audit Ledger | CORE BANKING SYSTEM</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="admin-portal-body">
+
+  <!-- Header Bar -->
+  <header class="bank-header admin-header-theme">
+    <div class="nav-container">
+      <a href="{{ url_for('main.admin_dashboard') }}" class="bank-brand">
+        <div class="bank-logo-icon admin-icon">🛡️</div>
+        <div>
+          <div class="bank-brand-title">CORE BANKING SYSTEM</div>
+          <div class="bank-brand-tagline">Staff Administration Portal</div>
+        </div>
+      </a>
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <span style="font-size: 0.88rem; color: #cbd5e1;">Logged in as: <strong>{{ session.get('admin_name', 'Administrator') }}</strong></span>
+        <a href="{{ url_for('main.admin_logout') }}" class="btn btn-outline btn-sm nav-logout">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Admin Layout with Sidebar Navigation -->
+  <div class="admin-layout-container">
+
+    <!-- Admin Sidebar Navigation -->
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-header">
+        <div class="admin-sidebar-title">Admin Navigation</div>
+        <div class="admin-sidebar-user">{{ session.get('admin_name', 'Administrator') }}</div>
+      </div>
+      <ul class="admin-nav-list">
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_dashboard') }}">
+            <span class="admin-nav-icon">📊</span>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_customers') }}">
+            <span class="admin-nav-icon">👥</span>
+            <span>Customers</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_accounts') }}">
+            <span class="admin-nav-icon">💳</span>
+            <span>Accounts</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_transactions') }}" class="active">
+            <span class="admin-nav-icon">📑</span>
+            <span>Transactions</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_loans') }}">
+            <span class="admin-nav-icon">🏦</span>
+            <span>Loans</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_cheques') }}">
+            <span class="admin-nav-icon">🧾</span>
+            <span>Cheque Requests</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_reports') }}">
+            <span class="admin-nav-icon">📈</span>
+            <span>Reports</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_audit_logs') }}">
+            <span class="admin-nav-icon">🔒</span>
+            <span>Audit Trail</span>
+          </a>
+        </li>
+        <li class="admin-nav-item nav-separator"></li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_logout') }}" class="nav-logout">
+            <span class="admin-nav-icon">🚪</span>
+            <span>Logout</span>
+          </a>
+        </li>
+      </ul>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="admin-main-content">
+
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ 'success' if category == 'success' else 'error' if category == 'danger' or category == 'error' else 'warning' if category == 'warning' else 'info' }}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <!-- Page Header -->
+      <div class="page-header" style="margin-bottom: 1.25rem;">
+        <h1 class="page-title">Transaction Management &amp; Audit Ledger</h1>
+        <p class="page-subtitle">Historical records of all deposits, withdrawals, and inter-account transfers across the banking network.</p>
+      </div>
+
+      <!-- Filter Controls Bar -->
+      <div class="admin-search-box">
+        <form action="{{ url_for('main.admin_transactions') }}" method="GET" class="admin-search-form">
+          <label style="font-weight: 600; font-size: 0.9rem; color: var(--color-primary);">Filter by Transaction Type:</label>
+          <select name="type" class="search-select-field">
+            <option value="All" {% if selected_type == 'All' %}selected{% endif %}>All Types</option>
+            <option value="Deposit" {% if selected_type == 'Deposit' %}selected{% endif %}>Deposit</option>
+            <option value="Withdrawal" {% if selected_type == 'Withdrawal' %}selected{% endif %}>Withdrawal</option>
+            <option value="Transfer" {% if selected_type == 'Transfer' %}selected{% endif %}>Transfer</option>
+          </select>
+          <button type="submit" class="btn btn-primary btn-sm">Apply Filter</button>
+          {% if selected_type != 'All' %}
+            <a href="{{ url_for('main.admin_transactions') }}" class="btn btn-outline btn-sm">Clear Filter</a>
+          {% endif %}
+        </form>
+      </div>
+
+      <!-- Immutable Audit Notice -->
+      <div class="card" style="border-left: 4px solid #1e3a8a; background: #f8fafc; margin-bottom: 1.25rem;">
+        <p style="font-size: 0.88rem; color: var(--color-text-muted); margin: 0;">
+          🔒 <strong>Immutable Financial Ledger:</strong> Transaction entries are strictly read-only historical records and cannot be altered, overwritten, or deleted by administration staff.
+        </p>
+      </div>
+
+      <!-- Transactions Audit Table Card -->
+      <div class="card">
+        <div class="card-title">
+          <span>System Transactions ({{ total_transactions }} Found)</span>
+          {% if selected_type != 'All' %}
+            <span class="badge badge-type">Showing: {{ selected_type }}</span>
+          {% endif %}
+        </div>
+
+        <div class="table-responsive">
+          <table class="bank-table">
+            <thead>
+              <tr>
+                <th>Transaction ID</th>
+                <th>Customer</th>
+                <th>Transaction Type</th>
+                <th>Amount</th>
+                <th>Date / Time</th>
+                <th>Reference Account</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if transactions %}
+                {% for tx in transactions %}
+                <tr>
+                  <td><code>{{ tx.transaction_id }}</code></td>
+                  <td>
+                    <strong>{{ tx.customer_name }}</strong>
+                    <span style="font-size: 0.8rem; color: var(--color-text-muted);">(ID #{{ tx.customer_id }})</span>
+                  </td>
+                  <td>
+                    {% if tx.type == 'Deposit' %}
+                      <span class="tx-badge tx-badge-deposit">&darr; Deposit</span>
+                    {% elif tx.type == 'Withdrawal' %}
+                      <span class="tx-badge tx-badge-withdrawal">&uarr; Withdrawal</span>
+                    {% elif tx.type == 'Transfer' %}
+                      <span class="tx-badge tx-badge-transfer">&rarr; Transfer</span>
+                    {% else %}
+                      <span class="badge badge-type">{{ tx.type }}</span>
+                    {% endif %}
+                  </td>
+                  <td class="balance-cell">{{ format_currency(tx.amount) }}</td>
+                  <td style="font-size: 0.85rem; color: var(--color-text-muted);">{{ tx.timestamp }}</td>
+                  <td style="font-size: 0.88rem;">{{ tx.reference_account or 'Primary Account' }}</td>
+                  <td><span class="badge badge-active" style="font-size: 0.75rem;">{{ tx.status }}</span></td>
+                </tr>
+                {% endfor %}
+              {% else %}
+                <tr>
+                  <td colspan="7" style="text-align: center; color: var(--color-text-muted); padding: 2.5rem;">
+                    No transaction records found matching type "{{ selected_type }}".
+                  </td>
+                </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bank-footer">
+    <div class="nav-container" style="justify-content: center;">
+      <p><strong>CORE BANKING SYSTEM</strong> &bull; Administrative Operations &amp; Ledger Control</p>
+    </div>
+  </footer>
+
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CORE BANKING SYSTEM | Online Banking Platform</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="bank-header">
+    <div class="nav-container">
+      <a href="{{ url_for('main.index') }}" class="bank-brand">
+        <div class="bank-logo-icon">B</div>
+        <div>
+          <div class="bank-brand-title">CORE BANKING SYSTEM</div>
+          <div class="bank-brand-tagline">Secure Financial Portal</div>
+        </div>
+      </a>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="{{ url_for('main.index') }}" class="nav-link active">Home</a></li>
+          <li><a href="{{ url_for('main.customers_list') }}" class="nav-link">Directory</a></li>
+          {% if session.get('role') == 'customer' %}
+            <li><a href="{{ url_for('main.customer_dashboard') }}" class="nav-link">My Dashboard</a></li>
+            <li><a href="{{ url_for('main.customer_logout') }}" class="nav-link nav-logout">Sign Out</a></li>
+          {% elif session.get('role') == 'admin' %}
+            <li><a href="{{ url_for('main.admin_dashboard') }}" class="nav-link">Admin Console</a></li>
+            <li><a href="{{ url_for('main.admin_logout') }}" class="nav-link nav-logout">Staff Sign Out</a></li>
+          {% else %}
+            <li><a href="{{ url_for('main.customer_login') }}" class="nav-link">Customer Login</a></li>
+            <li><a href="{{ url_for('main.customer_register') }}" class="nav-link">Register</a></li>
+            <li><a href="{{ url_for('main.admin_login') }}" class="nav-link">Admin Portal</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="page-container">
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ 'success' if category == 'success' else 'error' if category == 'danger' or category == 'error' else 'warning' if category == 'warning' else 'info' }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Header Section -->
+    <div class="page-header">
+      <h1 class="page-title">Welcome to CORE BANKING SYSTEM</h1>
+      <p class="page-subtitle">Secure personal accounts, real-time deposits, withdrawals, fund transfers, and ledger records.</p>
+    </div>
+
+    <!-- Quick Access Portals Grid -->
+    <div class="portal-cards-grid">
+      <div class="portal-card customer-portal-card">
+        <div class="portal-card-header">
+          <span class="auth-badge customer-badge">Personal Banking</span>
+          <h3>Customer Portal</h3>
+        </div>
+        <p>Access your personal checking or savings account, view real-time balances, make deposits, withdraw funds, and transfer money.</p>
+        <div class="portal-card-actions">
+          {% if session.get('role') == 'customer' %}
+            <a href="{{ url_for('main.customer_dashboard') }}" class="btn btn-primary btn-sm">Enter Dashboard &rarr;</a>
+          {% else %}
+            <a href="{{ url_for('main.customer_login') }}" class="btn btn-primary btn-sm">Sign In</a>
+            <a href="{{ url_for('main.customer_register') }}" class="btn btn-outline btn-sm">Open Account</a>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="portal-card admin-portal-card">
+        <div class="portal-card-header">
+          <span class="auth-badge admin-badge">🛡️ Staff Only</span>
+          <h3>Administrator Portal</h3>
+        </div>
+        <p>Authorized branch personnel and system operators. Review accounts, manage system metrics, and audit bank registrations.</p>
+        <div class="portal-card-actions">
+          {% if session.get('role') == 'admin' %}
+            <a href="{{ url_for('main.admin_dashboard') }}" class="btn btn-admin btn-sm">Open Admin Console &rarr;</a>
+          {% else %}
+            <a href="{{ url_for('main.admin_login') }}" class="btn btn-admin btn-sm">Staff Authentication &rarr;</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Metrics Cards -->
+    <section class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-label">Total Customers</div>
+        <div class="metric-value">{{ summary.total_customers }}</div>
+      </div>
+      <div class="metric-card success">
+        <div class="metric-label">Active Accounts</div>
+        <div class="metric-value">{{ summary.active_customers }}</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Inactive Accounts</div>
+        <div class="metric-value">{{ summary.inactive_customers }}</div>
+      </div>
+      <div class="metric-card accent">
+        <div class="metric-label">Total Deposits</div>
+        <div class="metric-value">{{ format_currency(summary.total_balance) }}</div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bank-footer">
+    <div class="nav-container" style="justify-content: center;">
+      <p><strong>CORE BANKING SYSTEM</strong> &bull; Python &amp; Flask</p>
+    </div>
+  </footer>
+
+</body>
+</html>

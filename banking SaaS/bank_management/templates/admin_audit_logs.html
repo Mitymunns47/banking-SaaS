@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Administrative Audit Trail | CORE BANKING SYSTEM</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="admin-portal-body">
+
+  <!-- Header Bar -->
+  <header class="bank-header admin-header-theme">
+    <div class="nav-container">
+      <a href="{{ url_for('main.admin_dashboard') }}" class="bank-brand">
+        <div class="bank-logo-icon admin-icon">🛡️</div>
+        <div>
+          <div class="bank-brand-title">CORE BANKING SYSTEM</div>
+          <div class="bank-brand-tagline">Staff Administration Portal</div>
+        </div>
+      </a>
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <span style="font-size: 0.88rem; color: #cbd5e1;">Logged in as: <strong>{{ session.get('admin_name', 'Administrator') }}</strong></span>
+        <a href="{{ url_for('main.admin_logout') }}" class="btn btn-outline btn-sm nav-logout">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Admin Layout with Sidebar Navigation -->
+  <div class="admin-layout-container">
+
+    <!-- Admin Sidebar Navigation -->
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-header">
+        <div class="admin-sidebar-title">Admin Navigation</div>
+        <div class="admin-sidebar-user">{{ session.get('admin_name', 'Administrator') }}</div>
+      </div>
+      <ul class="admin-nav-list">
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_dashboard') }}">
+            <span class="admin-nav-icon">📊</span>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_customers') }}">
+            <span class="admin-nav-icon">👥</span>
+            <span>Customers</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_accounts') }}">
+            <span class="admin-nav-icon">💳</span>
+            <span>Accounts</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_transactions') }}">
+            <span class="admin-nav-icon">📑</span>
+            <span>Transactions</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_loans') }}">
+            <span class="admin-nav-icon">🏦</span>
+            <span>Loans</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_cheques') }}">
+            <span class="admin-nav-icon">🧾</span>
+            <span>Cheque Requests</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_reports') }}">
+            <span class="admin-nav-icon">📈</span>
+            <span>Reports &amp; Analytics</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_audit_logs') }}" class="active">
+            <span class="admin-nav-icon">🔒</span>
+            <span>Audit Trail</span>
+          </a>
+        </li>
+        <li class="admin-nav-item nav-separator"></li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_logout') }}" class="nav-logout">
+            <span class="admin-nav-icon">🚪</span>
+            <span>Logout</span>
+          </a>
+        </li>
+      </ul>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="admin-main-content">
+
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ 'success' if category == 'success' else 'error' if category == 'danger' or category == 'error' else 'warning' if category == 'warning' else 'info' }}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <!-- Page Header -->
+      <div class="page-header" style="margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <h1 class="page-title">Administrative Audit Trail</h1>
+          <p class="page-subtitle">Immutable security ledger capturing administrative decisions, account approvals, loan underwriting, and governance events.</p>
+        </div>
+        <a href="{{ url_for('main.admin_export_csv', dataset='audit_logs', filter=selected_action) }}" class="btn-export">
+          📥 Export Audit Log (CSV)
+        </a>
+      </div>
+
+      <!-- Action Filter Bar -->
+      <div class="report-controls-panel">
+        <form method="GET" action="{{ url_for('main.admin_audit_logs') }}" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+          <span style="font-size: 0.88rem; font-weight: 600; color: var(--color-primary);">Filter by Event Action:</span>
+          <select name="action" class="search-select-field" style="min-width: 220px;" onchange="this.form.submit()">
+            <option value="All" {% if selected_action == 'All' %}selected{% endif %}>All Administrative Actions</option>
+            <option value="ACCOUNT_APPROVED" {% if selected_action == 'ACCOUNT_APPROVED' %}selected{% endif %}>ACCOUNT_APPROVED</option>
+            <option value="ACCOUNT_REJECTED" {% if selected_action == 'ACCOUNT_REJECTED' %}selected{% endif %}>ACCOUNT_REJECTED</option>
+            <option value="ACCOUNT_FROZEN" {% if selected_action == 'ACCOUNT_FROZEN' %}selected{% endif %}>ACCOUNT_FROZEN</option>
+            <option value="ACCOUNT_UNFROZEN" {% if selected_action == 'ACCOUNT_UNFROZEN' %}selected{% endif %}>ACCOUNT_UNFROZEN</option>
+            <option value="ACCOUNT_CLOSED" {% if selected_action == 'ACCOUNT_CLOSED' %}selected{% endif %}>ACCOUNT_CLOSED</option>
+            <option value="LOAN_APPROVED" {% if selected_action == 'LOAN_APPROVED' %}selected{% endif %}>LOAN_APPROVED</option>
+            <option value="LOAN_REJECTED" {% if selected_action == 'LOAN_REJECTED' %}selected{% endif %}>LOAN_REJECTED</option>
+            <option value="LOAN_ACTIVATED" {% if selected_action == 'LOAN_ACTIVATED' %}selected{% endif %}>LOAN_ACTIVATED</option>
+            <option value="CHEQUE_APPROVED" {% if selected_action == 'CHEQUE_APPROVED' %}selected{% endif %}>CHEQUE_APPROVED</option>
+            <option value="CHEQUE_REJECTED" {% if selected_action == 'CHEQUE_REJECTED' %}selected{% endif %}>CHEQUE_REJECTED</option>
+            <option value="CHEQUE_COMPLETED" {% if selected_action == 'CHEQUE_COMPLETED' %}selected{% endif %}>CHEQUE_COMPLETED</option>
+          </select>
+          <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+          {% if selected_action != 'All' %}
+            <a href="{{ url_for('main.admin_audit_logs') }}" class="btn btn-outline btn-sm">Clear Filter</a>
+          {% endif %}
+          <span style="margin-left: auto; font-size: 0.82rem; color: var(--color-text-muted);">
+            Showing <strong>{{ total_logs }}</strong> recorded events
+          </span>
+        </form>
+      </div>
+
+      <!-- Audit Logs Table -->
+      <div class="report-section-box">
+        {% if logs %}
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Log ID</th>
+                  <th>Admin ID</th>
+                  <th>Action</th>
+                  <th>Target Type</th>
+                  <th>Target ID</th>
+                  <th>Timestamp</th>
+                  <th>Outcome</th>
+                  <th>Details</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for log in logs %}
+                  <tr>
+                    <td><code>#LOG-{{ log.log_id }}</code></td>
+                    <td><strong>{{ log.admin_id }}</strong></td>
+                    <td>
+                      <span class="badge-status status-active" style="font-size: 0.75rem;">
+                        {{ log.action }}
+                      </span>
+                    </td>
+                    <td>{{ log.target_type }}</td>
+                    <td><code>{{ log.target_id }}</code></td>
+                    <td style="font-size: 0.82rem; color: var(--color-text-muted); white-space: nowrap;">{{ log.timestamp }}</td>
+                    <td>
+                      <span class="badge-status status-{{ 'active' if log.outcome == 'Success' else 'rejected' }}">
+                        {{ log.outcome }}
+                      </span>
+                    </td>
+                    <td style="font-size: 0.84rem; max-width: 320px;">{{ log.details }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div style="text-align: center; padding: 2.5rem 1rem; color: var(--color-text-muted);">
+            <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">🔒</div>
+            <div style="font-weight: 600; font-size: 1.05rem; color: var(--color-primary); margin-bottom: 0.25rem;">No Audit Records Found</div>
+            <p style="font-size: 0.88rem;">No events match the selected action filter.</p>
+          </div>
+        {% endif %}
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bank-footer">
+    <div class="container footer-content">
+      <div>
+        <strong>CORE BANKING SYSTEM</strong> &mdash; Staff Administration &amp; Operational Analytics
+      </div>
+      <div class="footer-copy">
+        &copy; 2026 CORE BANKING SYSTEM. All rights reserved.
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

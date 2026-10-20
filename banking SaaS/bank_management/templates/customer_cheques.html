@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cheque Book Services | CORE BANKING SYSTEM</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="bank-header">
+    <div class="nav-container">
+      <a href="{{ url_for('main.customer_dashboard') }}" class="bank-brand">
+        <div class="bank-logo-icon">B</div>
+        <div>
+          <div class="bank-brand-title">CORE BANKING SYSTEM</div>
+          <div class="bank-brand-tagline">Online Banking &bull; Customer Portal</div>
+        </div>
+      </a>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="{{ url_for('main.customer_dashboard') }}" class="nav-link">Dashboard</a></li>
+          <li><a href="{{ url_for('main.deposit') }}" class="nav-link">Deposit</a></li>
+          <li><a href="{{ url_for('main.withdraw') }}" class="nav-link">Withdraw</a></li>
+          <li><a href="{{ url_for('main.transfer') }}" class="nav-link">Transfer</a></li>
+          <li><a href="{{ url_for('main.transactions') }}" class="nav-link">Transactions</a></li>
+          <li><a href="{{ url_for('main.customer_loans') }}" class="nav-link">Loans</a></li>
+          <li><a href="{{ url_for('main.customer_cheques') }}" class="nav-link active">Cheque Book</a></li>
+          <li><a href="{{ url_for('main.change_password') }}" class="nav-link">Security</a></li>
+          <li><a href="{{ url_for('main.customer_logout') }}" class="nav-link nav-logout">Sign Out</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="page-container">
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ 'success' if category == 'success' else 'error' if category == 'danger' or category == 'error' else 'warning' if category == 'warning' else 'info' }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Page Header -->
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <h1 class="page-title">Cheque Book Services</h1>
+        <p class="page-subtitle">Submit personalized cheque leaf orders, view issuance progress, and manage requests.</p>
+      </div>
+
+      <div>
+        <a href="{{ url_for('main.customer_request_cheque') }}" class="btn btn-primary">
+          + Request Cheque Book
+        </a>
+      </div>
+    </div>
+
+    <!-- Summary Metrics -->
+    <section class="metrics-grid" style="margin-bottom: 1.5rem;">
+      <div class="metric-card">
+        <div class="metric-label">Total Requests</div>
+        <div class="metric-value">{{ requests|length }}</div>
+      </div>
+      <div class="metric-card" style="border-left: 4px solid #d97706;">
+        <div class="metric-label">Pending Review</div>
+        <div class="metric-value" style="color: #d97706;">
+          {{ requests|selectattr('status', 'equalto', 'Pending')|list|length }}
+        </div>
+      </div>
+      <div class="metric-card" style="border-left: 4px solid #2563eb;">
+        <div class="metric-label">Approved &amp; Processing</div>
+        <div class="metric-value" style="color: #2563eb;">
+          {{ requests|selectattr('status', 'equalto', 'Approved')|list|length }}
+        </div>
+      </div>
+      <div class="metric-card" style="border-left: 4px solid #059669;">
+        <div class="metric-label">Completed &amp; Dispatched</div>
+        <div class="metric-value" style="color: #059669;">
+          {{ requests|selectattr('status', 'equalto', 'Completed')|list|length }}
+        </div>
+      </div>
+    </section>
+
+    <!-- Cheque Requests Registry Card -->
+    <div class="card">
+      <div class="card-title">
+        <span>Cheque Book Request History</span>
+        <span class="badge badge-active">{{ requests|length }} Recorded</span>
+      </div>
+
+      {% if requests %}
+        <div class="table-responsive">
+          <table class="bank-table">
+            <thead>
+              <tr>
+                <th>Request ID</th>
+                <th>Account (Masked)</th>
+                <th>Leaves</th>
+                <th>Request Date</th>
+                <th>Status</th>
+                <th>Remarks / Notes</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for req in requests %}
+                <tr>
+                  <td><strong>{{ req.cheque_request_id }}</strong></td>
+                  <td>
+                    <span class="account-num" style="letter-spacing: 0.5px;">{{ req.masked_account_number }}</span>
+                  </td>
+                  <td>
+                    <span class="badge badge-type">{{ req.leaves }} Leaves</span>
+                  </td>
+                  <td style="font-size: 0.85rem; color: var(--color-text-muted);">
+                    {{ req.request_date }}
+                  </td>
+                  <td>
+                    {% if req.status == 'Pending' %}
+                      <span class="badge-status status-pending">⏳ Pending</span>
+                    {% elif req.status == 'Approved' %}
+                      <span class="badge-status status-frozen" style="background-color: #eff6ff; color: #1d4ed8;">✓ Approved</span>
+                    {% elif req.status == 'Completed' %}
+                      <span class="badge-status status-active">✓ Completed</span>
+                    {% elif req.status == 'Rejected' %}
+                      <span class="badge-status status-rejected">✕ Rejected</span>
+                    {% elif req.status == 'Cancelled' %}
+                      <span class="badge-status status-cancelled">⊘ Cancelled</span>
+                    {% else %}
+                      <span class="badge-status">{{ req.status }}</span>
+                    {% endif %}
+                  </td>
+                  <td style="font-size: 0.85rem; max-width: 240px;">
+                    {% if req.rejection_reason %}
+                      <span style="color: #b91c1c;"><strong>Reason:</strong> {{ req.rejection_reason }}</span>
+                    {% elif req.admin_notes %}
+                      <span style="color: var(--color-text-muted);">{{ req.admin_notes }}</span>
+                    {% else %}
+                      <span style="color: var(--color-text-muted);">&mdash;</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if req.status == 'Pending' %}
+                      <form method="POST" action="{{ url_for('main.customer_cancel_cheque', request_id=req.request_id) }}" onsubmit="return confirm('Are you sure you want to cancel this pending cheque book request?');" style="margin: 0;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline btn-sm" style="color: #b91c1c; border-color: #fca5a5; padding: 0.25rem 0.6rem; font-size: 0.8rem;">
+                          ⊘ Cancel
+                        </button>
+                      </form>
+                    {% else %}
+                      <span style="color: var(--color-text-muted); font-size: 0.8rem;">&mdash;</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div style="text-align: center; padding: 2.5rem 1rem; color: var(--color-text-muted);">
+          <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">🧾</div>
+          <p style="font-weight: 600; margin-bottom: 0.5rem;">No Cheque Book Requests Found</p>
+          <p style="font-size: 0.88rem; max-width: 420px; margin: 0 auto 1.25rem;">
+            You have not submitted any cheque book requests yet. Order 10, 25, or 50 leaf personalized chequebooks for your active account.
+          </p>
+          <a href="{{ url_for('main.customer_request_cheque') }}" class="btn btn-primary btn-sm">
+            Order Your First Cheque Book &rarr;
+          </a>
+        </div>
+      {% endif %}
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bank-footer">
+    <div class="nav-container" style="justify-content: center;">
+      <p><strong>CORE BANKING SYSTEM</strong> &bull; Secured Retail Services &amp; Cheque Operations</p>
+    </div>
+  </footer>
+
+</body>
+</html>

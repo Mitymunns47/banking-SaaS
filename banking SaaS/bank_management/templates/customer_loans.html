@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loan Portfolio | CORE BANKING SYSTEM</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="bank-header">
+    <div class="nav-container">
+      <a href="{{ url_for('main.customer_dashboard') }}" class="bank-brand">
+        <div class="bank-logo-icon">B</div>
+        <div>
+          <div class="bank-brand-title">CORE BANKING SYSTEM</div>
+          <div class="bank-brand-tagline">Online Banking &bull; Customer Portal</div>
+        </div>
+      </a>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="{{ url_for('main.customer_dashboard') }}" class="nav-link">Dashboard</a></li>
+          <li><a href="{{ url_for('main.deposit') }}" class="nav-link">Deposit</a></li>
+          <li><a href="{{ url_for('main.withdraw') }}" class="nav-link">Withdraw</a></li>
+          <li><a href="{{ url_for('main.transfer') }}" class="nav-link">Transfer</a></li>
+          <li><a href="{{ url_for('main.transactions') }}" class="nav-link">Transactions</a></li>
+          <li><a href="{{ url_for('main.customer_loans') }}" class="nav-link active">Loans</a></li>
+          <li><a href="{{ url_for('main.customer_cheques') }}" class="nav-link">Cheque Book</a></li>
+          <li><a href="{{ url_for('main.change_password') }}" class="nav-link">Security</a></li>
+          <li><a href="{{ url_for('main.customer_logout') }}" class="nav-link nav-logout">Sign Out</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="page-container">
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ 'success' if category == 'success' else 'error' if category == 'danger' or category == 'error' else 'warning' if category == 'warning' else 'info' }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Page Header -->
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <h1 class="page-title">Personal Loan Portfolio</h1>
+        <p class="page-subtitle">Manage credit applications, review approval decisions, and inspect repayment estimates.</p>
+      </div>
+
+      <div>
+        <a href="{{ url_for('main.apply_loan') }}" class="btn btn-primary">
+          + Apply for a Loan
+        </a>
+      </div>
+    </div>
+
+    <!-- Loan Metric Summary Cards -->
+    <section class="metrics-grid" style="margin-bottom: 1.5rem;">
+      <div class="metric-card">
+        <div class="metric-label">Total Applications</div>
+        <div class="metric-value">{{ loans|length }}</div>
+      </div>
+      <div class="metric-card" style="border-left: 4px solid #d97706;">
+        <div class="metric-label">Pending Review</div>
+        <div class="metric-value" style="color: #d97706;">{{ pending_count }}</div>
+      </div>
+      <div class="metric-card success" style="border-left: 4px solid #059669;">
+        <div class="metric-label">Approved &amp; Active</div>
+        <div class="metric-value" style="color: #059669;">{{ approved_count }}</div>
+      </div>
+    </section>
+
+    <!-- Loans History Table Card -->
+    <div class="card">
+      <div class="card-title">
+        <span>My Loan Application Records ({{ loans|length }})</span>
+        <a href="{{ url_for('main.apply_loan') }}" class="btn btn-outline btn-sm">New Application &rarr;</a>
+      </div>
+
+      <div class="table-responsive">
+        <table class="bank-table">
+          <thead>
+            <tr>
+              <th>Application ID</th>
+              <th>Loan Type</th>
+              <th>Requested Amount</th>
+              <th>Tenure</th>
+              <th>Application Date</th>
+              <th>Status</th>
+              <th>Approved Terms / EMI</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if loans %}
+              {% for loan in loans %}
+              <tr>
+                <td><strong>{{ loan.application_id }}</strong></td>
+                <td><span class="badge badge-type">{{ loan.loan_type }}</span></td>
+                <td class="balance-cell">{{ format_currency(loan.requested_amount) }}</td>
+                <td>{{ loan.tenure_months }} mos</td>
+                <td style="font-size: 0.85rem; color: var(--color-text-muted);">{{ loan.application_date }}</td>
+                <td>
+                  {% if loan.status == 'Pending' %}
+                    <span class="badge-status status-pending">⏳ Pending</span>
+                  {% elif loan.status == 'Approved' %}
+                    <span class="badge-status status-active">✓ Approved</span>
+                  {% elif loan.status == 'Active' %}
+                    <span class="badge-status status-active" style="background-color: #ecfdf5; color: #065f46;">&bull; Active</span>
+                  {% elif loan.status == 'Rejected' %}
+                    <span class="badge-status status-rejected">✕ Rejected</span>
+                  {% elif loan.status == 'Cancelled' %}
+                    <span class="badge-status status-closed">⊘ Cancelled</span>
+                  {% else %}
+                    <span class="badge-status status-closed">{{ loan.status }}</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if loan.status in ['Approved', 'Active'] and loan.estimated_emi %}
+                    <div style="font-size: 0.88rem; font-weight: 700; color: var(--color-primary);">
+                      {{ format_currency(loan.approved_amount) }} @ {{ loan.annual_interest_rate }}%
+                    </div>
+                    <div style="font-size: 0.78rem; color: var(--color-text-muted);">
+                      Est. EMI: <strong>{{ format_currency(loan.estimated_emi) }}</strong>/mo
+                    </div>
+                  {% elif loan.status == 'Pending' %}
+                    <span style="font-size: 0.82rem; color: var(--color-text-muted);">Awaiting Underwriting</span>
+                  {% elif loan.status == 'Rejected' %}
+                    <span style="font-size: 0.82rem; color: #991b1b;">Application Declined</span>
+                  {% elif loan.status == 'Cancelled' %}
+                    <span style="font-size: 0.82rem; color: var(--color-text-muted);">Cancelled by Applicant</span>
+                  {% else %}
+                    <span style="font-size: 0.82rem; color: var(--color-text-muted);">N/A</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <div class="btn-action-group">
+                    <a href="{{ url_for('main.customer_loan_details', loan_id=loan.loan_id) }}" class="btn btn-outline btn-sm">
+                      Details
+                    </a>
+
+                    {% if loan.status == 'Pending' %}
+                      <form method="POST" action="{{ url_for('main.customer_cancel_loan', loan_id=loan.loan_id) }}" class="form-inline-action" onsubmit="return confirm('Are you sure you wish to cancel loan application {{ loan.application_id }}?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn-reject" style="padding: 0.25rem 0.5rem; font-size: 0.78rem;">
+                          Cancel
+                        </button>
+                      </form>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="8" style="text-align: center; color: var(--color-text-muted); padding: 2.5rem;">
+                  You currently have no active or historical loan applications. Click "Apply for a Loan" to submit an application.
+                </td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bank-footer">
+    <div class="nav-container" style="justify-content: center;">
+      <p><strong>CORE BANKING SYSTEM</strong> &bull; Secured Retail Lending &amp; Credit Operations</p>
+    </div>
+  </footer>
+
+</body>
+</html>

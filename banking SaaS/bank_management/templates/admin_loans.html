@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loan Management &amp; Loan Underwriting | CORE BANKING SYSTEM</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="admin-portal-body">
+
+  <!-- Header Bar -->
+  <header class="bank-header admin-header-theme">
+    <div class="nav-container">
+      <a href="{{ url_for('main.admin_dashboard') }}" class="bank-brand">
+        <div class="bank-logo-icon admin-icon">🛡️</div>
+        <div>
+          <div class="bank-brand-title">CORE BANKING SYSTEM</div>
+          <div class="bank-brand-tagline">Staff Administration Portal</div>
+        </div>
+      </a>
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <span style="font-size: 0.88rem; color: #cbd5e1;">Logged in as: <strong>{{ session.get('admin_name', 'Administrator') }}</strong></span>
+        <a href="{{ url_for('main.admin_logout') }}" class="btn btn-outline btn-sm nav-logout">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Admin Layout with Sidebar Navigation -->
+  <div class="admin-layout-container">
+
+    <!-- Admin Sidebar Navigation -->
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-header">
+        <div class="admin-sidebar-title">Admin Navigation</div>
+        <div class="admin-sidebar-user">{{ session.get('admin_name', 'Administrator') }}</div>
+      </div>
+      <ul class="admin-nav-list">
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_dashboard') }}">
+            <span class="admin-nav-icon">📊</span>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_customers') }}">
+            <span class="admin-nav-icon">👥</span>
+            <span>Customers</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_accounts') }}">
+            <span class="admin-nav-icon">💳</span>
+            <span>Accounts</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_transactions') }}">
+            <span class="admin-nav-icon">📑</span>
+            <span>Transactions</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_loans') }}" class="active">
+            <span class="admin-nav-icon">🏦</span>
+            <span>Loans</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_cheques') }}">
+            <span class="admin-nav-icon">🧾</span>
+            <span>Cheque Requests</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_reports') }}">
+            <span class="admin-nav-icon">📈</span>
+            <span>Reports</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_audit_logs') }}">
+            <span class="admin-nav-icon">🔒</span>
+            <span>Audit Trail</span>
+          </a>
+        </li>
+        <li class="admin-nav-item nav-separator"></li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_logout') }}" class="nav-logout">
+            <span class="admin-nav-icon">🚪</span>
+            <span>Logout</span>
+          </a>
+        </li>
+      </ul>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="admin-main-content">
+
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ 'success' if category == 'success' else 'error' if category == 'danger' or category == 'error' else 'warning' if category == 'warning' else 'info' }}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <!-- Page Header -->
+      <div class="page-header" style="margin-bottom: 1.25rem;">
+        <h1 class="page-title">Loan Management &amp; Loan Underwriting</h1>
+        <p class="page-subtitle">Review credit applications, evaluate debt-to-income profiles, and authorize reducing-balance facilities.</p>
+      </div>
+
+      <!-- 5 Summary Metric Cards -->
+      <section class="metrics-grid-6" style="margin-bottom: 1.5rem;">
+        <div class="metric-card-stat">
+          <div class="stat-label">Total Applications</div>
+          <div class="stat-value">{{ summary.total_applications }}</div>
+        </div>
+        <div class="metric-card-stat stat-pending">
+          <div class="stat-label">Pending Review</div>
+          <div class="stat-value" style="color: #d97706;">{{ summary.pending_applications }}</div>
+        </div>
+        <div class="metric-card-stat stat-active">
+          <div class="stat-label">Approved Loans</div>
+          <div class="stat-value" style="color: #059669;">{{ summary.approved_loans }}</div>
+        </div>
+        <div class="metric-card-stat stat-frozen">
+          <div class="stat-label">Active Loans</div>
+          <div class="stat-value" style="color: #2563eb;">{{ summary.active_loans }}</div>
+        </div>
+        <div class="metric-card-stat stat-closed">
+          <div class="stat-label">Rejected Applications</div>
+          <div class="stat-value" style="color: #991b1b;">{{ summary.rejected_applications }}</div>
+        </div>
+        <div class="metric-card-stat stat-tx">
+          <div class="stat-label">Total Authorized</div>
+          <div class="stat-value" style="color: #7c3aed; font-size: 1.35rem;">
+            {{ format_currency(summary.total_approved_amount) }}
+          </div>
+        </div>
+      </section>
+
+      <!-- Search and Filter Bar -->
+      <div class="admin-search-box">
+        <form action="{{ url_for('main.admin_loans') }}" method="GET" class="admin-search-form">
+          <input
+            type="text"
+            name="q"
+            value="{{ search_query }}"
+            class="search-input-field"
+            placeholder="Search by Application ID, Customer Name, Purpose, or Account..."
+          >
+          <select name="status" class="search-select-field">
+            <option value="All" {% if status_filter == 'All' %}selected{% endif %}>All Statuses</option>
+            <option value="Pending" {% if status_filter == 'Pending' %}selected{% endif %}>Pending</option>
+            <option value="Approved" {% if status_filter == 'Approved' %}selected{% endif %}>Approved</option>
+            <option value="Active" {% if status_filter == 'Active' %}selected{% endif %}>Active</option>
+            <option value="Rejected" {% if status_filter == 'Rejected' %}selected{% endif %}>Rejected</option>
+            <option value="Cancelled" {% if status_filter == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+          </select>
+
+          <select name="type" class="search-select-field">
+            <option value="All" {% if type_filter == 'All' %}selected{% endif %}>All Types</option>
+            {% for lt in loan_types %}
+              <option value="{{ lt }}" {% if type_filter == lt %}selected{% endif %}>{{ lt }} Loan</option>
+            {% endfor %}
+          </select>
+
+          <button type="submit" class="btn btn-primary btn-sm">Filter Loans</button>
+          {% if search_query or status_filter != 'All' or type_filter != 'All' %}
+            <a href="{{ url_for('main.admin_loans') }}" class="btn btn-outline btn-sm">Reset</a>
+          {% endif %}
+        </form>
+      </div>
+
+      <!-- Loan Applications Registry Card -->
+      <div class="card">
+        <div class="card-title">
+          <span>Credit Facility Applications ({{ total_found }} Found)</span>
+          {% if status_filter != 'All' %}
+            <span class="badge badge-type">Status: {{ status_filter }}</span>
+          {% endif %}
+        </div>
+
+        <div class="table-responsive">
+          <table class="bank-table">
+            <thead>
+              <tr>
+                <th>App ID</th>
+                <th>Applicant</th>
+                <th>Type</th>
+                <th>Requested</th>
+                <th>Tenure</th>
+                <th>Monthly Income</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if loans %}
+                {% for loan in loans %}
+                <tr>
+                  <td><strong>{{ loan.application_id }}</strong></td>
+                  <td>
+                    <strong>{{ loan.customer_name }}</strong>
+                    <div style="font-size: 0.78rem; color: var(--color-text-muted);">
+                      ID #{{ loan.customer_id }} &bull; <span class="account-num">{{ loan.customer_account }}</span>
+                    </div>
+                  </td>
+                  <td><span class="badge badge-type">{{ loan.loan_type }}</span></td>
+                  <td class="balance-cell">{{ format_currency(loan.requested_amount) }}</td>
+                  <td>{{ loan.tenure_months }} mos</td>
+                  <td style="font-size: 0.88rem;">{{ format_currency(loan.monthly_income) }}</td>
+                  <td style="font-size: 0.82rem; color: var(--color-text-muted);">{{ loan.application_date }}</td>
+                  <td>
+                    {% if loan.status == 'Pending' %}
+                      <span class="badge-status status-pending">⏳ Pending</span>
+                    {% elif loan.status == 'Approved' %}
+                      <span class="badge-status status-active">✓ Approved</span>
+                    {% elif loan.status == 'Active' %}
+                      <span class="badge-status status-active" style="background-color: #ecfdf5; color: #065f46;">&bull; Active</span>
+                    {% elif loan.status == 'Rejected' %}
+                      <span class="badge-status status-rejected">✕ Rejected</span>
+                    {% elif loan.status == 'Cancelled' %}
+                      <span class="badge-status status-closed">⊘ Cancelled</span>
+                    {% else %}
+                      <span class="badge-status status-closed">{{ loan.status }}</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <div class="btn-action-group">
+                      <a href="{{ url_for('main.admin_loan_details', loan_id=loan.loan_id) }}" class="btn btn-outline btn-sm">
+                        Review &rarr;
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              {% else %}
+                <tr>
+                  <td colspan="9" style="text-align: center; color: var(--color-text-muted); padding: 2.5rem;">
+                    No loan applications matching criteria found.
+                  </td>
+                </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bank-footer">
+    <div class="nav-container" style="justify-content: center;">
+      <p><strong>CORE BANKING SYSTEM</strong> &bull; Administrative Operations &amp; Ledger Control</p>
+    </div>
+  </footer>
+
+</body>
+</html>

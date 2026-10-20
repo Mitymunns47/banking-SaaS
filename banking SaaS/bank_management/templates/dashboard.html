@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Dashboard | CORE BANKING SYSTEM</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="bank-header">
+    <div class="nav-container">
+      <a href="{{ url_for('main.customer_dashboard') }}" class="bank-brand">
+        <div class="bank-logo-icon">B</div>
+        <div>
+          <div class="bank-brand-title">CORE BANKING SYSTEM</div>
+          <div class="bank-brand-tagline">Online Banking &bull; Customer Portal</div>
+        </div>
+      </a>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="{{ url_for('main.customer_dashboard') }}" class="nav-link active">Dashboard</a></li>
+          <li><a href="{{ url_for('main.deposit') }}" class="nav-link">Deposit</a></li>
+          <li><a href="{{ url_for('main.withdraw') }}" class="nav-link">Withdraw</a></li>
+          <li><a href="{{ url_for('main.transfer') }}" class="nav-link">Transfer</a></li>
+          <li><a href="{{ url_for('main.transactions') }}" class="nav-link">Transactions</a></li>
+          <li><a href="{{ url_for('main.customer_loans') }}" class="nav-link">Loans</a></li>
+          <li><a href="{{ url_for('main.customer_cheques') }}" class="nav-link">Cheque Book</a></li>
+          <li><a href="{{ url_for('main.change_password') }}" class="nav-link">Security</a></li>
+          <li><a href="{{ url_for('main.customer_logout') }}" class="nav-link nav-logout">Sign Out</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="page-container">
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ 'success' if category == 'success' else 'error' if category == 'danger' or category == 'error' else 'warning' if category == 'warning' else 'info' }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Welcome Header -->
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <h1 class="page-title">Welcome, {{ customer.name }}</h1>
+        <p class="page-subtitle">Personal Account Overview &bull; Customer ID: <strong>#{{ customer.customer_id }}</strong></p>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; align-items: center;">
+        {% if customer.account_status == 'Active' %}
+          <span class="badge badge-active" style="font-size: 0.9rem; padding: 0.35rem 0.8rem;">
+            &bull; Status: Active
+          </span>
+        {% elif customer.account_status == 'Frozen' %}
+          <span class="badge badge-inactive" style="font-size: 0.9rem; padding: 0.35rem 0.8rem; background-color: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe;">
+            ❄️ Status: Frozen
+          </span>
+        {% elif customer.account_status == 'Pending' %}
+          <span class="badge badge-warning" style="font-size: 0.9rem; padding: 0.35rem 0.8rem;">
+            ⏳ Status: Pending Approval
+          </span>
+        {% elif customer.account_status == 'Closed' %}
+          <span class="badge badge-inactive" style="font-size: 0.9rem; padding: 0.35rem 0.8rem; background-color: #f3f4f6; color: #4b5563; border: 1px solid #d1d5db;">
+            🔒 Status: Closed
+          </span>
+        {% elif customer.account_status == 'Rejected' %}
+          <span class="badge badge-inactive" style="font-size: 0.9rem; padding: 0.35rem 0.8rem; background-color: #fef2f2; color: #991b1b; border: 1px solid #fecaca;">
+            ✕ Status: Rejected
+          </span>
+        {% else %}
+          <span class="badge badge-inactive" style="font-size: 0.9rem; padding: 0.35rem 0.8rem;">
+            &bull; Status: {{ customer.account_status }}
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Account Status Notice Banner -->
+    {% if customer.account_status == 'Frozen' %}
+      <div class="alert alert-warning" style="margin-bottom: 1.25rem;">
+        ❄️ <strong>Account Status Notice:</strong> Your account is currently <strong>Frozen</strong>. Deposits, withdrawals, and transfers are restricted. Please contact bank administration for assistance.
+      </div>
+    {% elif customer.account_status == 'Pending' %}
+      <div class="alert alert-info" style="margin-bottom: 1.25rem;">
+        ⏳ <strong>Account Status Notice:</strong> Your account application is <strong>Pending</strong> administrative approval. Banking operations will be activated once approved.
+      </div>
+    {% elif customer.account_status == 'Closed' %}
+      <div class="alert alert-error" style="margin-bottom: 1.25rem;">
+        🔒 <strong>Account Status Notice:</strong> Your account is <strong>Closed</strong>. No further banking operations may be conducted. Your historical records are preserved.
+      </div>
+    {% endif %}
+
+    <!-- Primary Account Overview Hero Card -->
+    <div class="dashboard-hero-card">
+      <div class="hero-left">
+        <div class="hero-type-label">{{ customer.account_type }} Account</div>
+        <div class="hero-account-num">Account No: <span>{{ customer.account_number }}</span></div>
+        <div class="hero-customer-info">
+          Email: {{ customer.email }} &bull; Phone: {{ customer.phone }}
+        </div>
+      </div>
+      <div class="hero-right">
+        <div class="hero-balance-label">Current Available Balance</div>
+        <div class="hero-balance-amount">{{ format_currency(customer.balance) }}</div>
+        <div class="hero-currency-tag">USD &bull; Ledger Balance</div>
+      </div>
+    </div>
+
+    <!-- Quick Action Bar -->
+    <div class="quick-action-bar">
+      <a href="{{ url_for('main.deposit') }}" class="btn btn-primary">
+        📥 Deposit Money
+      </a>
+      <a href="{{ url_for('main.withdraw') }}" class="btn btn-primary" style="background-color: #1e3a8a;">
+        📤 Withdraw Money
+      </a>
+      <a href="{{ url_for('main.transfer') }}" class="btn btn-primary" style="background-color: #2563eb;">
+        🔄 Transfer Funds
+      </a>
+      <a href="{{ url_for('main.transactions') }}" class="btn btn-outline">
+        📄 View Statement
+      </a>
+      <a href="{{ url_for('main.customer_loans') }}" class="btn btn-outline">
+        🏦 Loans &amp; EMI
+      </a>
+      <a href="{{ url_for('main.customer_cheques') }}" class="btn btn-outline">
+        🧾 Cheque Book
+      </a>
+    </div>
+
+    <!-- Core Banking Services Grid -->
+    <div class="card" style="margin-top: 1.5rem;">
+      <div class="card-title">
+        <span>Banking Operations &amp; Services</span>
+        <span class="badge badge-active">Available Services</span>
+      </div>
+
+      <div class="services-placeholder-grid">
+        
+        <!-- 1. Deposit (Working) -->
+        <div class="service-box">
+          <div class="service-icon">📥</div>
+          <div class="service-name">Deposit Funds</div>
+          <div class="service-desc">Deposit funds instantly into your personal ledger balance.</div>
+          <a href="{{ url_for('main.deposit') }}" class="btn btn-primary btn-sm">
+            Deposit Money &rarr;
+          </a>
+        </div>
+
+        <!-- 2. Withdraw (Working) -->
+        <div class="service-box">
+          <div class="service-icon">📤</div>
+          <div class="service-name">Withdraw Funds</div>
+          <div class="service-desc">Safely withdraw available funds from your bank balance.</div>
+          <a href="{{ url_for('main.withdraw') }}" class="btn btn-primary btn-sm">
+            Withdraw Money &rarr;
+          </a>
+        </div>
+
+        <!-- 3. Transfer (Working) -->
+        <div class="service-box">
+          <div class="service-icon">🔄</div>
+          <div class="service-name">Transfer Money</div>
+          <div class="service-desc">Send money directly to another registered customer account.</div>
+          <a href="{{ url_for('main.transfer') }}" class="btn btn-primary btn-sm">
+            Transfer Funds &rarr;
+          </a>
+        </div>
+
+        <!-- 4. Transactions (Working) -->
+        <div class="service-box">
+          <div class="service-icon">📄</div>
+          <div class="service-name">Account Statements</div>
+          <div class="service-desc">Review your chronological history of deposits, withdrawals, and transfers.</div>
+          <a href="{{ url_for('main.transactions') }}" class="btn btn-outline btn-sm">
+            View Statement &rarr;
+          </a>
+        </div>
+
+        <!-- 5. Loans (Active) -->
+        <div class="service-box">
+          <div class="service-icon">🏦</div>
+          <div class="service-name">Personal Loans</div>
+          <div class="service-desc">Personal financing, auto loans, and mortgage facilities with calculated EMI.</div>
+          <a href="{{ url_for('main.customer_loans') }}" class="btn btn-outline btn-sm">
+            View Loans &rarr;
+          </a>
+        </div>
+
+        <!-- 6. Cheque Book (Active) -->
+        <div class="service-box">
+          <div class="service-icon">🧾</div>
+          <div class="service-name">Cheque Book Services</div>
+          <div class="service-desc">Request customized 10, 25, or 50 leaf personalized chequebooks for active accounts.</div>
+          <a href="{{ url_for('main.customer_cheques') }}" class="btn btn-outline btn-sm">
+            Cheque Requests &rarr;
+          </a>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Recent Transactions Overview -->
+    <div class="card" style="margin-top: 1.5rem;">
+      <div class="card-title">
+        <span>Recent Account Activity</span>
+        <a href="{{ url_for('main.transactions') }}" class="btn btn-outline btn-sm">Full Transaction History &rarr;</a>
+      </div>
+
+      <div class="table-responsive">
+        <table class="bank-table">
+          <thead>
+            <tr>
+              <th>Txn ID</th>
+              <th>Type</th>
+              <th>Reference / Target</th>
+              <th>Date &amp; Time</th>
+              <th>Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for tx in recent_transactions %}
+            <tr>
+              <td><strong>#{{ tx.transaction_id }}</strong></td>
+              <td>
+                {% if tx.transaction_type == 'Deposit' or 'Credit' in tx.transaction_type %}
+                  <span class="badge badge-active">📥 {{ tx.transaction_type }}</span>
+                {% elif tx.transaction_type == 'Withdrawal' %}
+                  <span class="badge badge-inactive">📤 {{ tx.transaction_type }}</span>
+                {% else %}
+                  <span class="badge badge-warning">🔄 {{ tx.transaction_type }}</span>
+                {% endif %}
+              </td>
+              <td><span class="account-num">{{ tx.reference_account }}</span></td>
+              <td style="color: var(--color-text-muted); font-size: 0.88rem;">{{ tx.timestamp }}</td>
+              <td class="balance-cell">
+                {% if tx.transaction_type == 'Deposit' or 'Credit' in tx.transaction_type %}
+                  <span style="color: #059669; font-weight: 700;">+{{ format_currency(tx.amount) }}</span>
+                {% else %}
+                  <span style="color: #dc2626; font-weight: 700;">-{{ format_currency(tx.amount) }}</span>
+                {% endif %}
+              </td>
+              <td><span class="badge badge-active">&bull; {{ tx.status }}</span></td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="6" style="text-align: center; padding: 1.75rem; color: var(--color-text-muted);">
+                No transactions recorded yet. Use the Deposit button above to fund your account.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bank-footer">
+    <div class="nav-container" style="justify-content: center;">
+      <p><strong>CORE BANKING SYSTEM</strong> &bull; Secure Customer Banking Portal</p>
+    </div>
+  </footer>
+
+</body>
+</html>

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cheque Requests &amp; Management | CORE BANKING SYSTEM</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="admin-portal-body">
+
+  <!-- Header Bar -->
+  <header class="bank-header admin-header-theme">
+    <div class="nav-container">
+      <a href="{{ url_for('main.admin_dashboard') }}" class="bank-brand">
+        <div class="bank-logo-icon admin-icon">🛡️</div>
+        <div>
+          <div class="bank-brand-title">CORE BANKING SYSTEM</div>
+          <div class="bank-brand-tagline">Staff Administration Portal</div>
+        </div>
+      </a>
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <span style="font-size: 0.88rem; color: #cbd5e1;">Logged in as: <strong>{{ session.get('admin_name', 'Administrator') }}</strong></span>
+        <a href="{{ url_for('main.admin_logout') }}" class="btn btn-outline btn-sm nav-logout">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Admin Layout with Sidebar Navigation -->
+  <div class="admin-layout-container">
+
+    <!-- Admin Sidebar Navigation -->
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-header">
+        <div class="admin-sidebar-title">Admin Navigation</div>
+        <div class="admin-sidebar-user">{{ session.get('admin_name', 'Administrator') }}</div>
+      </div>
+      <ul class="admin-nav-list">
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_dashboard') }}">
+            <span class="admin-nav-icon">📊</span>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_customers') }}">
+            <span class="admin-nav-icon">👥</span>
+            <span>Customers</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_accounts') }}">
+            <span class="admin-nav-icon">💳</span>
+            <span>Accounts</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_transactions') }}">
+            <span class="admin-nav-icon">📑</span>
+            <span>Transactions</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_loans') }}">
+            <span class="admin-nav-icon">🏦</span>
+            <span>Loans</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_cheques') }}" class="active">
+            <span class="admin-nav-icon">🧾</span>
+            <span>Cheque Requests</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_reports') }}">
+            <span class="admin-nav-icon">📈</span>
+            <span>Reports</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_audit_logs') }}">
+            <span class="admin-nav-icon">🔒</span>
+            <span>Audit Trail</span>
+          </a>
+        </li>
+        <li class="admin-nav-item nav-separator"></li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_logout') }}" class="nav-logout">
+            <span class="admin-nav-icon">🚪</span>
+            <span>Logout</span>
+          </a>
+        </li>
+      </ul>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="admin-main-content">
+
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ 'success' if category == 'success' else 'error' if category == 'danger' or category == 'error' else 'warning' if category == 'warning' else 'info' }}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <!-- Page Header -->
+      <div class="page-header" style="margin-bottom: 1.25rem;">
+        <h1 class="page-title">Cheque Requests &amp; Dispatch Management</h1>
+        <p class="page-subtitle">Review customer cheque leaf orders, authorize issuance batches, and track dispatch status.</p>
+      </div>
+
+      <!-- 5 Summary Metric Cards -->
+      <section class="metrics-grid-6" style="margin-bottom: 1.5rem;">
+        <div class="metric-card-stat">
+          <div class="stat-label">Total Requests</div>
+          <div class="stat-value">{{ summary.total_requests }}</div>
+        </div>
+        <div class="metric-card-stat stat-pending">
+          <div class="stat-label">Pending Review</div>
+          <div class="stat-value" style="color: #d97706;">{{ summary.pending_requests }}</div>
+        </div>
+        <div class="metric-card-stat stat-frozen">
+          <div class="stat-label">Approved &amp; Queued</div>
+          <div class="stat-value" style="color: #2563eb;">{{ summary.approved_requests }}</div>
+        </div>
+        <div class="metric-card-stat stat-closed">
+          <div class="stat-label">Rejected Requests</div>
+          <div class="stat-value" style="color: #991b1b;">{{ summary.rejected_requests }}</div>
+        </div>
+        <div class="metric-card-stat stat-active">
+          <div class="stat-label">Completed &amp; Dispatched</div>
+          <div class="stat-value" style="color: #059669;">{{ summary.completed_requests }}</div>
+        </div>
+        <div class="metric-card-stat stat-tx">
+          <div class="stat-label">Customer Cancelled</div>
+          <div class="stat-value" style="color: #64748b; font-size: 1.35rem;">{{ summary.cancelled_requests }}</div>
+        </div>
+      </section>
+
+      <!-- Search and Filter Bar -->
+      <div class="admin-search-box">
+        <form action="{{ url_for('main.admin_cheques') }}" method="GET" class="admin-search-form">
+          <input
+            type="text"
+            name="q"
+            value="{{ search_query }}"
+            class="search-input-field"
+            placeholder="Search by Request ID, Customer Name, Account Number, or Customer ID..."
+          >
+          <select name="status" class="search-select-field">
+            <option value="All" {% if status_filter == 'All' or not status_filter %}selected{% endif %}>All Statuses</option>
+            {% for s in statuses %}
+              <option value="{{ s }}" {% if status_filter == s %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+          </select>
+
+          <button type="submit" class="btn btn-primary btn-sm">Filter Requests</button>
+          {% if search_query or (status_filter and status_filter != 'All') %}
+            <a href="{{ url_for('main.admin_cheques') }}" class="btn btn-outline btn-sm">Clear Filter</a>
+          {% endif %}
+        </form>
+      </div>
+
+      <!-- Requests Registry Card -->
+      <div class="card">
+        <div class="card-title">
+          <span>Cheque Book Orders Registry ({{ cheque_requests|length }} Found)</span>
+        </div>
+
+        {% if cheque_requests %}
+          <div class="table-responsive">
+            <table class="bank-table">
+              <thead>
+                <tr>
+                  <th>Request ID</th>
+                  <th>Customer Profile</th>
+                  <th>Account</th>
+                  <th>Leaves</th>
+                  <th>Request Date</th>
+                  <th>Status</th>
+                  <th>Decision / Notes</th>
+                  <th>Administrative Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for req in cheque_requests %}
+                  <tr>
+                    <td><strong>{{ req.cheque_request_id }}</strong></td>
+                    <td>
+                      <strong>{{ req.customer_name }}</strong>
+                      <div style="font-size: 0.78rem; color: var(--color-text-muted);">
+                        Customer ID #{{ req.customer_id }}
+                      </div>
+                    </td>
+                    <td>
+                      <span class="account-num">{{ req.account_number }}</span>
+                    </td>
+                    <td>
+                      <span class="badge badge-type">{{ req.leaves }} Leaves</span>
+                    </td>
+                    <td style="font-size: 0.82rem; color: var(--color-text-muted);">
+                      {{ req.request_date }}
+                    </td>
+                    <td>
+                      {% if req.status == 'Pending' %}
+                        <span class="badge-status status-pending">⏳ Pending</span>
+                      {% elif req.status == 'Approved' %}
+                        <span class="badge-status status-frozen" style="background-color: #eff6ff; color: #1d4ed8;">✓ Approved</span>
+                      {% elif req.status == 'Completed' %}
+                        <span class="badge-status status-active">✓ Completed</span>
+                      {% elif req.status == 'Rejected' %}
+                        <span class="badge-status status-rejected">✕ Rejected</span>
+                      {% elif req.status == 'Cancelled' %}
+                        <span class="badge-status status-cancelled">⊘ Cancelled</span>
+                      {% else %}
+                        <span class="badge-status">{{ req.status }}</span>
+                      {% endif %}
+                    </td>
+                    <td style="font-size: 0.82rem; max-width: 220px;">
+                      {% if req.rejection_reason %}
+                        <div style="color: #991b1b;">
+                          <strong>Reason:</strong> {{ req.rejection_reason }}
+                        </div>
+                      {% elif req.admin_notes %}
+                        <div style="color: var(--color-text-muted);">
+                          {{ req.admin_notes }}
+                        </div>
+                      {% else %}
+                        <span style="color: var(--color-text-muted);">&mdash;</span>
+                      {% endif %}
+                      {% if req.admin_decision_date %}
+                        <div style="font-size: 0.72rem; color: var(--color-text-muted); margin-top: 0.2rem;">
+                          Processed: {{ req.admin_decision_date }}
+                        </div>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if req.status == 'Pending' %}
+                        <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                          <!-- Approve Form -->
+                          <form method="POST" action="{{ url_for('main.admin_approve_cheque', request_id=req.request_id) }}" style="margin: 0;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="admin_notes" value="Approved for printing batch.">
+                            <button type="submit" class="btn btn-primary btn-sm" style="width: 100%; padding: 0.25rem 0.5rem; font-size: 0.78rem;">
+                              ✓ Approve
+                            </button>
+                          </form>
+
+                          <!-- Reject Toggle / Form -->
+                          <details style="font-size: 0.78rem;">
+                            <summary style="cursor: pointer; color: #b91c1c; font-weight: 600; text-align: center; padding: 0.15rem 0;">
+                              ✕ Reject &hellip;
+                            </summary>
+                            <form method="POST" action="{{ url_for('main.admin_reject_cheque', request_id=req.request_id) }}" style="margin-top: 0.35rem; display: flex; flex-direction: column; gap: 0.3rem;">
+                              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                              <input
+                                type="text"
+                                name="rejection_reason"
+                                placeholder="Rejection reason..."
+                                required
+                                minlength="3"
+                                style="font-size: 0.75rem; padding: 0.25rem; border: 1px solid var(--color-border); border-radius: 3px;"
+                              >
+                              <button type="submit" class="btn btn-outline btn-sm" style="color: #b91c1c; border-color: #fca5a5; font-size: 0.75rem; padding: 0.2rem 0.4rem;">
+                                Confirm Rejection
+                              </button>
+                            </form>
+                          </details>
+                        </div>
+                      {% elif req.status == 'Approved' %}
+                        <!-- Complete Form -->
+                        <form method="POST" action="{{ url_for('main.admin_complete_cheque', request_id=req.request_id) }}" style="margin: 0;">
+                          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                          <input type="hidden" name="admin_notes" value="Dispatched via postal courier.">
+                          <button type="submit" class="btn btn-primary btn-sm" style="background-color: #059669; width: 100%; padding: 0.25rem 0.5rem; font-size: 0.78rem;">
+                            ✓ Complete &amp; Dispatch
+                          </button>
+                        </form>
+                      {% else %}
+                        <span style="font-size: 0.78rem; color: var(--color-text-muted); font-style: italic;">
+                          Action Finalized
+                        </span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div style="text-align: center; padding: 2.5rem 1rem; color: var(--color-text-muted);">
+            <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">🧾</div>
+            <p style="font-weight: 600; margin-bottom: 0.5rem;">No Cheque Requests Found</p>
+            <p style="font-size: 0.88rem; max-width: 420px; margin: 0 auto 1.25rem;">
+              No cheque book request records match the active search or status criteria.
+            </p>
+            <a href="{{ url_for('main.admin_cheques') }}" class="btn btn-outline btn-sm">
+              Reset Filters &rarr;
+            </a>
+          </div>
+        {% endif %}
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bank-footer">
+    <div class="nav-container" style="justify-content: center;">
+      <p><strong>CORE BANKING SYSTEM</strong> &bull; Administrative Operations &amp; Ledger Control</p>
+    </div>
+  </footer>
+
+</body>
+</html>

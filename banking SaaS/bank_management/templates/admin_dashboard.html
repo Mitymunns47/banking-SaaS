@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | CORE BANKING SYSTEM</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="admin-portal-body">
+
+  <!-- Header Bar -->
+  <header class="bank-header admin-header-theme">
+    <div class="nav-container">
+      <a href="{{ url_for('main.admin_dashboard') }}" class="bank-brand">
+        <div class="bank-logo-icon admin-icon">🛡️</div>
+        <div>
+          <div class="bank-brand-title">CORE BANKING SYSTEM</div>
+          <div class="bank-brand-tagline">Staff Administration Portal</div>
+        </div>
+      </a>
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <span style="font-size: 0.88rem; color: #cbd5e1;">Logged in as: <strong>{{ admin_name }}</strong></span>
+        <a href="{{ url_for('main.admin_logout') }}" class="btn btn-outline btn-sm nav-logout">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Admin Layout with Sidebar Navigation -->
+  <div class="admin-layout-container">
+
+    <!-- Admin Sidebar Navigation -->
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-header">
+        <div class="admin-sidebar-title">Admin Navigation</div>
+        <div class="admin-sidebar-user">{{ admin_name }}</div>
+      </div>
+      <ul class="admin-nav-list">
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_dashboard') }}" class="active">
+            <span class="admin-nav-icon">📊</span>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_customers') }}">
+            <span class="admin-nav-icon">👥</span>
+            <span>Customers</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_accounts') }}">
+            <span class="admin-nav-icon">💳</span>
+            <span>Accounts</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_transactions') }}">
+            <span class="admin-nav-icon">📑</span>
+            <span>Transactions</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_loans') }}">
+            <span class="admin-nav-icon">🏦</span>
+            <span>Loans</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_cheques') }}">
+            <span class="admin-nav-icon">🧾</span>
+            <span>Cheque Requests</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_reports') }}">
+            <span class="admin-nav-icon">📈</span>
+            <span>Reports</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_audit_logs') }}">
+            <span class="admin-nav-icon">🔒</span>
+            <span>Audit Trail</span>
+          </a>
+        </li>
+        <li class="admin-nav-item nav-separator"></li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_logout') }}" class="nav-logout">
+            <span class="admin-nav-icon">🚪</span>
+            <span>Logout</span>
+          </a>
+        </li>
+      </ul>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="admin-main-content">
+
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ 'success' if category == 'success' else 'error' if category == 'danger' or category == 'error' else 'warning' if category == 'warning' else 'info' }}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <!-- Page Header -->
+      <div class="page-header" style="margin-bottom: 1.25rem;">
+        <h1 class="page-title">Executive Admin Dashboard</h1>
+        <p class="page-subtitle">Welcome back, {{ admin_name }}. Overview of current accounts, customer onboarding, and transaction ledgers.</p>
+      </div>
+
+      <!-- 6 Summary Metric Cards -->
+      <section class="metrics-grid-6">
+        <div class="metric-card-stat">
+          <div class="stat-label">Total Customers</div>
+          <div class="stat-value">{{ summary.total_customers }}</div>
+        </div>
+        <div class="metric-card-stat stat-active">
+          <div class="stat-label">Active Accounts</div>
+          <div class="stat-value" style="color: #059669;">{{ summary.active_accounts }}</div>
+        </div>
+        <div class="metric-card-stat stat-pending">
+          <div class="stat-label">Pending Accounts</div>
+          <div class="stat-value" style="color: #d97706;">{{ summary.pending_accounts }}</div>
+        </div>
+        <div class="metric-card-stat stat-frozen">
+          <div class="stat-label">Frozen Accounts</div>
+          <div class="stat-value" style="color: #2563eb;">{{ summary.frozen_accounts }}</div>
+        </div>
+        <div class="metric-card-stat stat-closed">
+          <div class="stat-label">Closed Accounts</div>
+          <div class="stat-value" style="color: #4b5563;">{{ summary.closed_accounts }}</div>
+        </div>
+        <div class="metric-card-stat stat-tx">
+          <div class="stat-label">Total Transactions</div>
+          <div class="stat-value" style="color: #7c3aed;">{{ summary.total_transactions }}</div>
+        </div>
+      </section>
+
+      <!-- Quick Action Shortcuts -->
+      <div class="card" style="margin-bottom: 1.5rem; background: #f8fafc; border-left: 4px solid var(--color-primary);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <h3 style="font-size: 1.05rem; color: var(--color-primary); margin-bottom: 0.25rem;">Administrative Quick Actions</h3>
+            <p style="font-size: 0.88rem; color: var(--color-text-muted);">
+              Manage account lifecycle approvals, customer searches, freeze or closure operations.
+            </p>
+          </div>
+          <div class="btn-action-group">
+            <a href="{{ url_for('main.admin_customers', status='Pending') }}" class="btn btn-primary btn-sm">
+              Review Pending ({{ summary.pending_accounts }})
+            </a>
+            <a href="{{ url_for('main.admin_customers') }}" class="btn btn-outline btn-sm">
+              Search Customers
+            </a>
+            <a href="{{ url_for('main.admin_transactions') }}" class="btn btn-outline btn-sm">
+              Audit Transactions
+            </a>
+            <a href="{{ url_for('main.admin_loans') }}" class="btn btn-outline btn-sm">
+              🏦 Review Loans
+            </a>
+            <a href="{{ url_for('main.admin_cheques') }}" class="btn btn-outline btn-sm">
+              🧾 Cheque Requests
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Customers Section -->
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-title">
+          <span>Recent Customer Registrations</span>
+          <a href="{{ url_for('main.admin_customers') }}" class="btn btn-outline btn-sm">View All Customers &rarr;</a>
+        </div>
+
+        <div class="table-responsive">
+          <table class="bank-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Account No.</th>
+                <th>Type</th>
+                <th>Balance</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for cust in recent_customers %}
+              <tr>
+                <td><strong>#{{ cust.customer_id }}</strong></td>
+                <td>{{ cust.name }}</td>
+                <td style="font-size: 0.85rem; color: var(--color-text-muted);">{{ cust.email }}</td>
+                <td><span class="account-num">{{ cust.account_number }}</span></td>
+                <td><span class="badge badge-type">{{ cust.account_type }}</span></td>
+                <td class="balance-cell">{{ format_currency(cust.balance) }}</td>
+                <td>
+                  {% if cust.account_status == 'Active' %}
+                    <span class="badge-status status-active">&bull; Active</span>
+                  {% elif cust.account_status == 'Pending' %}
+                    <span class="badge-status status-pending">⏳ Pending</span>
+                  {% elif cust.account_status == 'Frozen' %}
+                    <span class="badge-status status-frozen">❄️ Frozen</span>
+                  {% elif cust.account_status == 'Closed' %}
+                    <span class="badge-status status-closed">🔒 Closed</span>
+                  {% elif cust.account_status == 'Rejected' %}
+                    <span class="badge-status status-rejected">✕ Rejected</span>
+                  {% else %}
+                    <span class="badge-status status-closed">{{ cust.account_status }}</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <a href="{{ url_for('main.admin_customer_details', customer_id=cust.customer_id) }}" class="btn btn-outline btn-sm">
+                    Details
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Recent Transactions Section -->
+      <div class="card">
+        <div class="card-title">
+          <span>Recent System Transactions</span>
+          <a href="{{ url_for('main.admin_transactions') }}" class="btn btn-outline btn-sm">View All Transactions &rarr;</a>
+        </div>
+
+        <div class="table-responsive">
+          <table class="bank-table">
+            <thead>
+              <tr>
+                <th>Tx ID</th>
+                <th>Customer</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Date / Time</th>
+                <th>Reference</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if recent_transactions %}
+                {% for tx in recent_transactions %}
+                <tr>
+                  <td><code>{{ tx.transaction_id }}</code></td>
+                  <td>{{ tx.customer_name }}</td>
+                  <td>
+                    {% if tx.type == 'Deposit' %}
+                      <span class="tx-badge tx-badge-deposit">&darr; Deposit</span>
+                    {% elif tx.type == 'Withdrawal' %}
+                      <span class="tx-badge tx-badge-withdrawal">&uarr; Withdrawal</span>
+                    {% elif tx.type == 'Transfer' %}
+                      <span class="tx-badge tx-badge-transfer">&rarr; Transfer</span>
+                    {% else %}
+                      <span class="badge badge-type">{{ tx.type }}</span>
+                    {% endif %}
+                  </td>
+                  <td class="balance-cell">{{ format_currency(tx.amount) }}</td>
+                  <td style="font-size: 0.82rem; color: var(--color-text-muted);">{{ tx.timestamp }}</td>
+                  <td style="font-size: 0.85rem;">{{ tx.reference_account or 'Self' }}</td>
+                  <td><span class="badge badge-active" style="font-size: 0.75rem;">{{ tx.status }}</span></td>
+                </tr>
+                {% endfor %}
+              {% else %}
+                <tr>
+                  <td colspan="7" style="text-align: center; color: var(--color-text-muted); padding: 1.5rem;">
+                    No transactions recorded yet in the ledger.
+                  </td>
+                </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bank-footer">
+    <div class="nav-container" style="justify-content: center;">
+      <p><strong>CORE BANKING SYSTEM</strong> &bull; Administrative Operations &amp; Ledger Control</p>
+    </div>
+  </footer>
+
+</body>
+</html>

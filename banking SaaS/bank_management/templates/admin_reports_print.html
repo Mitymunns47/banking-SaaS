@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Operational Report Summary | CORE BANKING SYSTEM</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    body {
+      background: #f8fafc;
+      color: #0f172a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 1.5rem;
+    }
+    .print-container {
+      max-width: 960px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 2.5rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+    }
+    .print-header {
+      border-bottom: 2px solid #0f2744;
+      padding-bottom: 1.25rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .print-title {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: #0f2744;
+      margin: 0 0 0.25rem 0;
+    }
+    .print-subtitle {
+      font-size: 0.95rem;
+      color: #64748b;
+      margin: 0;
+    }
+    .print-toolbar {
+      margin-bottom: 1.5rem;
+      display: flex;
+      gap: 0.75rem;
+      justify-content: flex-end;
+    }
+    .stat-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1.75rem;
+      font-size: 0.9rem;
+    }
+    .stat-table th, .stat-table td {
+      border: 1px solid #cbd5e1;
+      padding: 0.65rem 0.85rem;
+      text-align: left;
+    }
+    .stat-table th {
+      background-color: #f1f5f9;
+      font-weight: 700;
+      color: #0f2744;
+    }
+    .section-heading {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #0f2744;
+      margin-top: 1.5rem;
+      margin-bottom: 0.65rem;
+      border-left: 4px solid #1e40af;
+      padding-left: 0.6rem;
+    }
+    @media print {
+      body {
+        padding: 0;
+        background: #ffffff;
+      }
+      .print-container {
+        border: none;
+        padding: 0;
+        max-width: 100%;
+      }
+      .print-toolbar {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="print-container">
+
+    <!-- Action Toolbar (Hidden when printing) -->
+    <div class="print-toolbar no-print">
+      <button onclick="window.print()" class="btn btn-primary btn-sm">
+        🖨️ Print / Save as PDF
+      </button>
+      <button onclick="window.close()" class="btn btn-outline btn-sm">
+        ✕ Close Window
+      </button>
+    </div>
+
+    <!-- Official Header -->
+    <div class="print-header">
+      <div>
+        <h1 class="print-title">CORE BANKING SYSTEM</h1>
+        <p class="print-subtitle">Executive Operational Management Report</p>
+      </div>
+      <div style="text-align: right; font-size: 0.85rem; color: #475569;">
+        <div><strong>Generation Time:</strong> {{ report.generated_at }}</div>
+        <div><strong>Filter Range:</strong> {{ start_date or 'Beginning' }} to {{ end_date or 'Present' }}</div>
+      </div>
+    </div>
+
+    <!-- 1. Customer & Account Statuses -->
+    <div class="section-heading">1. Customer Registry &amp; Account Breakdown</div>
+    <table class="stat-table">
+      <thead>
+        <tr>
+          <th>Metric Category</th>
+          <th>Count / Value</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Total Registered Customers</strong></td>
+          <td>{{ report.customers.total_registered }}</td>
+          <td>Unique individuals registered in platform</td>
+        </tr>
+        <tr>
+          <td><strong>Active Accounts</strong></td>
+          <td style="color: #16a34a; font-weight: 700;">{{ report.customers.active_accounts }}</td>
+          <td>Operational accounts with deposit &amp; withdrawal permissions</td>
+        </tr>
+        <tr>
+          <td><strong>Pending Accounts</strong></td>
+          <td style="color: #d97706; font-weight: 700;">{{ report.customers.pending_accounts }}</td>
+          <td>Accounts undergoing administrative review</td>
+        </tr>
+        <tr>
+          <td><strong>Frozen Accounts</strong></td>
+          <td style="color: #0284c7; font-weight: 700;">{{ report.customers.frozen_accounts }}</td>
+          <td>Accounts under security hold (balance preserved)</td>
+        </tr>
+        <tr>
+          <td><strong>Rejected Accounts</strong></td>
+          <td style="color: #dc2626; font-weight: 700;">{{ report.customers.rejected_accounts }}</td>
+          <td>Declined registration applications</td>
+        </tr>
+        <tr>
+          <td><strong>Closed Accounts</strong></td>
+          <td>{{ report.customers.closed_accounts }}</td>
+          <td>Permanently deactivated accounts (ledger preserved)</td>
+        </tr>
+        <tr>
+          <td><strong>Total Customer Deposits</strong></td>
+          <td style="font-weight: 700;">{{ format_currency(report.customers.total_balance) }}</td>
+          <td>Cumulative system liabilities (customer available balances)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- 2. Financial Transaction Flow -->
+    <div class="section-heading">2. Transaction Activity &amp; Flow (Within Date Filter)</div>
+    <table class="stat-table">
+      <thead>
+        <tr>
+          <th>Transaction Type</th>
+          <th>Total Count</th>
+          <th>Aggregate Value ($)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Deposits</strong></td>
+          <td>{{ report.transactions.deposit_count }}</td>
+          <td style="color: #16a34a; font-weight: 700;">+{{ format_currency(report.transactions.total_deposits) }}</td>
+        </tr>
+        <tr>
+          <td><strong>Withdrawals</strong></td>
+          <td>{{ report.transactions.withdrawal_count }}</td>
+          <td style="color: #dc2626; font-weight: 700;">-{{ format_currency(report.transactions.total_withdrawals) }}</td>
+        </tr>
+        <tr>
+          <td><strong>Inter-Account Transfers</strong></td>
+          <td>{{ report.transactions.transfer_count }}</td>
+          <td style="color: #2563eb; font-weight: 700;">{{ format_currency(report.transactions.total_transfers) }}</td>
+        </tr>
+        <tr style="background-color: #f8fafc; font-weight: 700;">
+          <td>Total Filtered Volume</td>
+          <td>{{ report.transactions.total_count }} Transactions</td>
+          <td>{{ format_currency(report.transactions.total_deposits + report.transactions.total_withdrawals + report.transactions.total_transfers) }} Gross Flow</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- 3. Credit Facility & Loans -->
+    <div class="section-heading">3. Loan Portfolio &amp; Approval Statistics</div>
+    <table class="stat-table">
+      <thead>
+        <tr>
+          <th>Application Status</th>
+          <th>Count</th>
+          <th>Financial Overview</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Pending Decisions</strong></td>
+          <td>{{ report.loans.status_counts.Pending }}</td>
+          <td>Awaiting credit committee underwriting</td>
+        </tr>
+        <tr>
+          <td><strong>Approved &amp; Active</strong></td>
+          <td style="color: #16a34a; font-weight: 700;">{{ report.loans.status_counts.Approved + report.loans.status_counts.Active }}</td>
+          <td>Approved: {{ format_currency(report.loans.total_approved_amount) }} (Avg: {{ format_currency(report.loans.average_approved_amount) }})</td>
+        </tr>
+        <tr>
+          <td><strong>Rejected Applications</strong></td>
+          <td style="color: #dc2626; font-weight: 700;">{{ report.loans.status_counts.Rejected }}</td>
+          <td>Declined credit facilities</td>
+        </tr>
+        <tr>
+          <td><strong>Total Requested Capital</strong></td>
+          <td>{{ report.loans.total_applications }} total requests</td>
+          <td style="font-weight: 700;">{{ format_currency(report.loans.total_requested_amount) }} requested</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- 4. Cheque Requests -->
+    <div class="section-heading">4. Cheque Book Requisition Statistics</div>
+    <table class="stat-table">
+      <thead>
+        <tr>
+          <th>Status Category</th>
+          <th>Request Count</th>
+          <th>Leaf Size Breakdown</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Pending Verification</strong></td>
+          <td>{{ report.cheques.status_counts.Pending }}</td>
+          <td rowspan="3">
+            10 Leaves: <strong>{{ report.cheques.leaves_breakdown[10] }}</strong><br>
+            25 Leaves: <strong>{{ report.cheques.leaves_breakdown[25] }}</strong><br>
+            50 Leaves: <strong>{{ report.cheques.leaves_breakdown[50] }}</strong>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>Approved / Printing</strong></td>
+          <td>{{ report.cheques.status_counts.Approved }}</td>
+        </tr>
+        <tr>
+          <td><strong>Completed / Dispatched</strong></td>
+          <td style="color: #16a34a; font-weight: 700;">{{ report.cheques.status_counts.Completed }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Verification Footer -->
+    <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #cbd5e1; font-size: 0.8rem; color: #64748b; display: flex; justify-content: space-between;">
+      <div>Generated by Authorized Admin: <strong>{{ session.get('admin_name', 'Administrator') }}</strong></div>
+      <div>CORE BANKING SYSTEM &mdash; Internal Audit &amp; Reporting</div>
+    </div>
+
+  </div>
+
+</body>
+</html>

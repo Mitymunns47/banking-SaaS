@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transaction History | CORE BANKING SYSTEM</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="bank-header">
+    <div class="nav-container">
+      <a href="{{ url_for('main.customer_dashboard') }}" class="bank-brand">
+        <div class="bank-logo-icon">B</div>
+        <div>
+          <div class="bank-brand-title">CORE BANKING SYSTEM</div>
+          <div class="bank-brand-tagline">Online Banking &bull; Customer Portal</div>
+        </div>
+      </a>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="{{ url_for('main.customer_dashboard') }}" class="nav-link">Dashboard</a></li>
+          <li><a href="{{ url_for('main.deposit') }}" class="nav-link">Deposit</a></li>
+          <li><a href="{{ url_for('main.withdraw') }}" class="nav-link">Withdraw</a></li>
+          <li><a href="{{ url_for('main.transfer') }}" class="nav-link">Transfer</a></li>
+          <li><a href="{{ url_for('main.transactions') }}" class="nav-link active">Transactions</a></li>
+          <li><a href="{{ url_for('main.customer_loans') }}" class="nav-link">Loans</a></li>
+          <li><a href="{{ url_for('main.customer_cheques') }}" class="nav-link">Cheque Book</a></li>
+          <li><a href="{{ url_for('main.change_password') }}" class="nav-link">Security</a></li>
+          <li><a href="{{ url_for('main.customer_logout') }}" class="nav-link nav-logout">Sign Out</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="page-container">
+
+    <!-- Page Header -->
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <h1 class="page-title">Transaction Statement</h1>
+        <p class="page-subtitle">Personal account audit history for: <strong>{{ customer.name }}</strong> (<code>{{ customer.account_number }}</code>)</p>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem;">
+        <a href="{{ url_for('main.deposit') }}" class="btn btn-primary btn-sm">+ Deposit</a>
+        <a href="{{ url_for('main.withdraw') }}" class="btn btn-outline btn-sm">- Withdraw</a>
+        <a href="{{ url_for('main.transfer') }}" class="btn btn-outline btn-sm">&rarr; Transfer</a>
+      </div>
+    </div>
+
+    <!-- Quick Ledger Summary -->
+    <div class="metric-card accent" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <div class="metric-label">Ledger Balance</div>
+        <div class="metric-value">{{ format_currency(customer.balance) }}</div>
+      </div>
+      <div>
+        <span class="badge badge-type">{{ customer.account_type }} Account</span>
+      </div>
+    </div>
+
+    <!-- Transactions Table Card -->
+    <div class="card">
+      <div class="card-title">
+        <span>Recorded Ledger Activity ({{ transactions|length }})</span>
+        <a href="{{ url_for('main.customer_dashboard') }}" class="btn btn-outline btn-sm">&larr; Back to Dashboard</a>
+      </div>
+
+      <div class="table-responsive">
+        <table class="bank-table">
+          <thead>
+            <tr>
+              <th>Txn ID</th>
+              <th>Type</th>
+              <th>Reference / Target Account</th>
+              <th>Date &amp; Time</th>
+              <th>Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for tx in transactions %}
+            <tr>
+              <td><strong>#{{ tx.transaction_id }}</strong></td>
+              <td>
+                {% if tx.transaction_type == 'Deposit' or 'Credit' in tx.transaction_type %}
+                  <span class="badge badge-active">📥 {{ tx.transaction_type }}</span>
+                {% elif tx.transaction_type == 'Withdrawal' %}
+                  <span class="badge badge-inactive">📤 {{ tx.transaction_type }}</span>
+                {% elif 'Debit' in tx.transaction_type %}
+                  <span class="badge badge-warning">🔄 {{ tx.transaction_type }}</span>
+                {% else %}
+                  <span class="badge badge-type">{{ tx.transaction_type }}</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="account-num">{{ tx.reference_account }}</span>
+              </td>
+              <td style="color: var(--color-text-muted); font-size: 0.88rem;">
+                {{ tx.timestamp }}
+              </td>
+              <td class="balance-cell" style="font-weight: 700; font-size: 1rem;">
+                {% if tx.transaction_type == 'Deposit' or 'Credit' in tx.transaction_type %}
+                  <span style="color: #059669;">+{{ format_currency(tx.amount) }}</span>
+                {% else %}
+                  <span style="color: #dc2626;">-{{ format_currency(tx.amount) }}</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="badge badge-active">&bull; {{ tx.status }}</span>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--color-text-muted);">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">📄</div>
+                <p>No transaction records found for your account yet.</p>
+                <div style="margin-top: 1rem;">
+                  <a href="{{ url_for('main.deposit') }}" class="btn btn-primary btn-sm">Make Your First Deposit &rarr;</a>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bank-footer">
+    <div class="nav-container" style="justify-content: center;">
+      <p><strong>CORE BANKING SYSTEM</strong> &bull; Secure Statement Ledger</p>
+    </div>
+  </footer>
+
+</body>
+</html>

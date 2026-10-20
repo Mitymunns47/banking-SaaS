@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Request Cheque Book | CORE BANKING SYSTEM</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="bank-header">
+    <div class="nav-container">
+      <a href="{{ url_for('main.customer_dashboard') }}" class="bank-brand">
+        <div class="bank-logo-icon">B</div>
+        <div>
+          <div class="bank-brand-title">CORE BANKING SYSTEM</div>
+          <div class="bank-brand-tagline">Online Banking &bull; Customer Portal</div>
+        </div>
+      </a>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="{{ url_for('main.customer_dashboard') }}" class="nav-link">Dashboard</a></li>
+          <li><a href="{{ url_for('main.deposit') }}" class="nav-link">Deposit</a></li>
+          <li><a href="{{ url_for('main.withdraw') }}" class="nav-link">Withdraw</a></li>
+          <li><a href="{{ url_for('main.transfer') }}" class="nav-link">Transfer</a></li>
+          <li><a href="{{ url_for('main.transactions') }}" class="nav-link">Transactions</a></li>
+          <li><a href="{{ url_for('main.customer_loans') }}" class="nav-link">Loans</a></li>
+          <li><a href="{{ url_for('main.customer_cheques') }}" class="nav-link active">Cheque Book</a></li>
+          <li><a href="{{ url_for('main.change_password') }}" class="nav-link">Security</a></li>
+          <li><a href="{{ url_for('main.customer_logout') }}" class="nav-link nav-logout">Sign Out</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="page-container" style="max-width: 680px;">
+
+    <!-- Breadcrumb -->
+    <div style="margin-bottom: 1.25rem;">
+      <a href="{{ url_for('main.customer_cheques') }}" class="btn btn-outline btn-sm">
+        &larr; Back to Cheque Book Services
+      </a>
+    </div>
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1 class="page-title">Request Cheque Book</h1>
+      <p class="page-subtitle">Submit a request for personalized cheque leaves linked to your active banking account.</p>
+    </div>
+
+    <!-- Error Messages Block -->
+    {% if errors %}
+      <div class="alert alert-error">
+        <strong>Please correct the following:</strong>
+        <ul style="margin: 0.5rem 0 0 1.25rem;">
+          {% for error in errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ 'success' if category == 'success' else 'error' if category == 'danger' or category == 'error' else 'warning' if category == 'warning' else 'info' }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Request Form Card -->
+    <div class="card">
+      <div class="card-title">Cheque Book Specification Form</div>
+
+      {% if not eligible_accounts %}
+        <div class="alert alert-warning" style="margin-bottom: 0;">
+          ⚠️ <strong>No Eligible Active Accounts:</strong> Cheque books can only be ordered for active bank accounts. Your account status is currently <strong>{{ customer.account_status }}</strong>. Please contact branch administration to activate your account.
+        </div>
+      {% else %}
+        <form method="POST" action="{{ url_for('main.customer_request_cheque') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <!-- Account Selection -->
+          <div class="form-group">
+            <label class="form-label" for="account_number">Select Active Account <span style="color: #b91c1c;">*</span></label>
+            <select name="account_number" id="account_number" class="search-select-field" style="width: 100%;" required>
+              {% for acc in eligible_accounts %}
+                <option value="{{ acc.account_number }}" {% if form_data.account_number == acc.account_number %}selected{% endif %}>
+                  {{ acc.account_number }} &bull; {{ acc.account_type }} Account (Active)
+                </option>
+              {% endfor %}
+            </select>
+            <div style="font-size: 0.78rem; color: var(--color-text-muted); margin-top: 0.35rem;">
+              Cheque book will be serialized and printed with your account ledger coordinates.
+            </div>
+          </div>
+
+          <!-- Leaf Count Selection -->
+          <div class="form-group">
+            <label class="form-label">Number of Cheque Leaves <span style="color: #b91c1c;">*</span></label>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 0.5rem;">
+              {% for leaves in leaf_options %}
+                <label style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; border: 2px solid {% if form_data.leaves|int == leaves %}var(--color-primary){% else %}var(--color-border){% endif %}; border-radius: var(--radius-sm); cursor: pointer; background: {% if form_data.leaves|int == leaves %}#f0fdf4{% else %}#fff{% endif %}; text-align: center; transition: border-color 0.2s;">
+                  <input
+                    type="radio"
+                    name="leaves"
+                    value="{{ leaves }}"
+                    {% if form_data.leaves|int == leaves %}checked{% endif %}
+                    style="margin-bottom: 0.5rem;"
+                  >
+                  <span style="font-size: 1.25rem; font-weight: 700; color: var(--color-primary);">{{ leaves }}</span>
+                  <span style="font-size: 0.8rem; color: var(--color-text-muted);">Leaves</span>
+                </label>
+              {% endfor %}
+            </div>
+            <div style="font-size: 0.78rem; color: var(--color-text-muted); margin-top: 0.5rem;">
+              Standard bank options: 10 leaves (Personal Starter), 25 leaves (Standard Retail), 50 leaves (Commercial/High Volume).
+            </div>
+          </div>
+
+          <!-- Delivery / Remarks Notes -->
+          <div class="form-group">
+            <label class="form-label" for="delivery_notes">Special Instructions / Branch Dispatch Notes (Optional)</label>
+            <input
+              type="text"
+              name="delivery_notes"
+              id="delivery_notes"
+              value="{{ form_data.delivery_notes }}"
+              class="search-input-field"
+              placeholder="e.g., Hold at Downtown Branch for collection, or express postal courier"
+              style="width: 100%;"
+              maxlength="150"
+            >
+          </div>
+
+          <!-- Information notice box -->
+          <div style="background-color: #f8fafc; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 0.85rem 1rem; margin-bottom: 1.5rem; font-size: 0.83rem; color: var(--color-text-muted);">
+            ℹ️ <strong>Operational Process:</strong> Once submitted, your request will be queued in <em>Pending</em> status. Upon administrative verification, your serial range will be authorized and prepared for courier dispatch.
+          </div>
+
+          <!-- Actions -->
+          <div style="display: flex; gap: 1rem; align-items: center;">
+            <button type="submit" class="btn btn-primary" style="flex: 1;">
+              Submit Cheque Book Request &rarr;
+            </button>
+            <a href="{{ url_for('main.customer_cheques') }}" class="btn btn-outline">
+              Cancel
+            </a>
+          </div>
+
+        </form>
+      {% endif %}
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bank-footer">
+    <div class="nav-container" style="justify-content: center;">
+      <p><strong>CORE BANKING SYSTEM</strong> &bull; Secured Retail Services &amp; Cheque Operations</p>
+    </div>
+  </footer>
+
+</body>
+</html>

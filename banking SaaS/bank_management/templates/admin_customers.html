@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Management | CORE BANKING SYSTEM</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="admin-portal-body">
+
+  <!-- Header Bar -->
+  <header class="bank-header admin-header-theme">
+    <div class="nav-container">
+      <a href="{{ url_for('main.admin_dashboard') }}" class="bank-brand">
+        <div class="bank-logo-icon admin-icon">🛡️</div>
+        <div>
+          <div class="bank-brand-title">CORE BANKING SYSTEM</div>
+          <div class="bank-brand-tagline">Staff Administration Portal</div>
+        </div>
+      </a>
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <span style="font-size: 0.88rem; color: #cbd5e1;">Logged in as: <strong>{{ session.get('admin_name', 'Administrator') }}</strong></span>
+        <a href="{{ url_for('main.admin_logout') }}" class="btn btn-outline btn-sm nav-logout">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Admin Layout with Sidebar Navigation -->
+  <div class="admin-layout-container">
+
+    <!-- Admin Sidebar Navigation -->
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-header">
+        <div class="admin-sidebar-title">Admin Navigation</div>
+        <div class="admin-sidebar-user">{{ session.get('admin_name', 'Administrator') }}</div>
+      </div>
+      <ul class="admin-nav-list">
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_dashboard') }}">
+            <span class="admin-nav-icon">📊</span>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_customers') }}" class="active">
+            <span class="admin-nav-icon">👥</span>
+            <span>Customers</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_accounts') }}">
+            <span class="admin-nav-icon">💳</span>
+            <span>Accounts</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_transactions') }}">
+            <span class="admin-nav-icon">📑</span>
+            <span>Transactions</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_loans') }}">
+            <span class="admin-nav-icon">🏦</span>
+            <span>Loans</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_cheques') }}">
+            <span class="admin-nav-icon">🧾</span>
+            <span>Cheque Requests</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_reports') }}">
+            <span class="admin-nav-icon">📈</span>
+            <span>Reports</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_audit_logs') }}">
+            <span class="admin-nav-icon">🔒</span>
+            <span>Audit Trail</span>
+          </a>
+        </li>
+        <li class="admin-nav-item nav-separator"></li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_logout') }}" class="nav-logout">
+            <span class="admin-nav-icon">🚪</span>
+            <span>Logout</span>
+          </a>
+        </li>
+      </ul>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="admin-main-content">
+
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ 'success' if category == 'success' else 'error' if category == 'danger' or category == 'error' else 'warning' if category == 'warning' else 'info' }}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <!-- Page Header -->
+      <div class="page-header" style="margin-bottom: 1.25rem;">
+        <h1 class="page-title">Customer Management</h1>
+        <p class="page-subtitle">Search, inspect, approve, freeze, and manage lifecycle status of customer banking accounts.</p>
+      </div>
+
+      <!-- Search and Filter Bar -->
+      <div class="admin-search-box">
+        <form action="{{ url_for('main.admin_customers') }}" method="GET" class="admin-search-form">
+          <input
+            type="text"
+            name="q"
+            value="{{ search_query }}"
+            class="search-input-field"
+            placeholder="Search by ID, Customer Name, Email, or Account Number..."
+          >
+          <select name="status" class="search-select-field">
+            <option value="All" {% if status_filter == 'All' %}selected{% endif %}>All Statuses</option>
+            <option value="Active" {% if status_filter == 'Active' %}selected{% endif %}>Active</option>
+            <option value="Pending" {% if status_filter == 'Pending' %}selected{% endif %}>Pending</option>
+            <option value="Frozen" {% if status_filter == 'Frozen' %}selected{% endif %}>Frozen</option>
+            <option value="Closed" {% if status_filter == 'Closed' %}selected{% endif %}>Closed</option>
+            <option value="Rejected" {% if status_filter == 'Rejected' %}selected{% endif %}>Rejected</option>
+          </select>
+          <button type="submit" class="btn btn-primary btn-sm">Search Records</button>
+          {% if search_query or status_filter != 'All' %}
+            <a href="{{ url_for('main.admin_customers') }}" class="btn btn-outline btn-sm">Reset</a>
+          {% endif %}
+        </form>
+      </div>
+
+      <!-- Customers Table Card -->
+      <div class="card">
+        <div class="card-title">
+          <span>Registered Customers ({{ total_found }} Found)</span>
+          {% if status_filter != 'All' %}
+            <span class="badge badge-type">Filtered by: {{ status_filter }}</span>
+          {% endif %}
+        </div>
+
+        <div class="table-responsive">
+          <table class="bank-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Account Number</th>
+                <th>Type</th>
+                <th>Balance</th>
+                <th>Account Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if customers %}
+                {% for cust in customers %}
+                <tr>
+                  <td><strong>#{{ cust.customer_id }}</strong></td>
+                  <td><strong>{{ cust.name }}</strong></td>
+                  <td style="font-size: 0.85rem; color: var(--color-text-muted);">{{ cust.email }}</td>
+                  <td style="font-size: 0.85rem;">{{ cust.phone or 'N/A' }}</td>
+                  <td><span class="account-num">{{ cust.account_number }}</span></td>
+                  <td><span class="badge badge-type">{{ cust.account_type }}</span></td>
+                  <td class="balance-cell">{{ format_currency(cust.balance) }}</td>
+                  <td>
+                    {% if cust.account_status == 'Active' %}
+                      <span class="badge-status status-active">&bull; Active</span>
+                    {% elif cust.account_status == 'Pending' %}
+                      <span class="badge-status status-pending">⏳ Pending</span>
+                    {% elif cust.account_status == 'Frozen' %}
+                      <span class="badge-status status-frozen">❄️ Frozen</span>
+                    {% elif cust.account_status == 'Closed' %}
+                      <span class="badge-status status-closed">🔒 Closed</span>
+                    {% elif cust.account_status == 'Rejected' %}
+                      <span class="badge-status status-rejected">✕ Rejected</span>
+                    {% else %}
+                      <span class="badge-status status-closed">{{ cust.account_status }}</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <div class="btn-action-group">
+                      <!-- Details Button -->
+                      <a href="{{ url_for('main.admin_customer_details', customer_id=cust.customer_id) }}" class="btn btn-outline btn-sm" title="View Customer Profile">
+                        Details
+                      </a>
+
+                      <!-- Lifecycle Actions with Confirmation Prompts -->
+                      {% if cust.account_status == 'Pending' %}
+                        <!-- Approve -->
+                        <form method="POST" action="{{ url_for('main.admin_approve_account', customer_id=cust.customer_id) }}" class="form-inline-action" onsubmit="return confirm('Approve account for {{ cust.name }} (ID #{{ cust.customer_id }}) to Active?');">
+                          <button type="submit" class="btn-approve" title="Approve Account">Approve</button>
+                        </form>
+                        <!-- Reject -->
+                        <form method="POST" action="{{ url_for('main.admin_reject_account', customer_id=cust.customer_id) }}" class="form-inline-action" onsubmit="return confirm('Reject registration for {{ cust.name }} (ID #{{ cust.customer_id }})?');">
+                          <button type="submit" class="btn-reject" title="Reject Registration">Reject</button>
+                        </form>
+                      {% elif cust.account_status == 'Active' %}
+                        <!-- Freeze -->
+                        <form method="POST" action="{{ url_for('main.admin_freeze_account', customer_id=cust.customer_id) }}" class="form-inline-action" onsubmit="return confirm('Freeze active account for {{ cust.name }}? Banking operations will be blocked until unfrozen.');">
+                          <button type="submit" class="btn-freeze" title="Freeze Account">Freeze</button>
+                        </form>
+                      {% elif cust.account_status == 'Frozen' %}
+                        <!-- Unfreeze -->
+                        <form method="POST" action="{{ url_for('main.admin_unfreeze_account', customer_id=cust.customer_id) }}" class="form-inline-action" onsubmit="return confirm('Unfreeze account for {{ cust.name }} to Active status?');">
+                          <button type="submit" class="btn-unfreeze" title="Unfreeze Account">Unfreeze</button>
+                        </form>
+                      {% endif %}
+
+                      <!-- Close Account (for non-closed accounts) -->
+                      {% if cust.account_status != 'Closed' and cust.account_status != 'Rejected' %}
+                        <form method="POST" action="{{ url_for('main.admin_close_account', customer_id=cust.customer_id) }}" class="form-inline-action" onsubmit="return confirm('Are you sure you want to CLOSE the account for {{ cust.name }}? Account history is preserved, but no further banking operations can occur.');">
+                          <button type="submit" class="btn-close-acc" title="Close Account">Close</button>
+                        </form>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              {% else %}
+                <tr>
+                  <td colspan="9" style="text-align: center; color: var(--color-text-muted); padding: 2rem;">
+                    No customers found matching the criteria "{{ search_query }}".
+                  </td>
+                </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bank-footer">
+    <div class="nav-container" style="justify-content: center;">
+      <p><strong>CORE BANKING SYSTEM</strong> &bull; Administrative Operations &amp; Ledger Control</p>
+    </div>
+  </footer>
+
+</body>
+</html>

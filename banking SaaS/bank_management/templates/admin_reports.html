@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports &amp; Analytics | CORE BANKING SYSTEM</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="admin-portal-body">
+
+  <!-- Header Bar -->
+  <header class="bank-header admin-header-theme">
+    <div class="nav-container">
+      <a href="{{ url_for('main.admin_dashboard') }}" class="bank-brand">
+        <div class="bank-logo-icon admin-icon">🛡️</div>
+        <div>
+          <div class="bank-brand-title">CORE BANKING SYSTEM</div>
+          <div class="bank-brand-tagline">Staff Administration Portal</div>
+        </div>
+      </a>
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <span style="font-size: 0.88rem; color: #cbd5e1;">Logged in as: <strong>{{ session.get('admin_name', 'Administrator') }}</strong></span>
+        <a href="{{ url_for('main.admin_logout') }}" class="btn btn-outline btn-sm nav-logout">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Admin Layout with Sidebar Navigation -->
+  <div class="admin-layout-container">
+
+    <!-- Admin Sidebar Navigation -->
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-header">
+        <div class="admin-sidebar-title">Admin Navigation</div>
+        <div class="admin-sidebar-user">{{ session.get('admin_name', 'Administrator') }}</div>
+      </div>
+      <ul class="admin-nav-list">
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_dashboard') }}">
+            <span class="admin-nav-icon">📊</span>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_customers') }}">
+            <span class="admin-nav-icon">👥</span>
+            <span>Customers</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_accounts') }}">
+            <span class="admin-nav-icon">💳</span>
+            <span>Accounts</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_transactions') }}">
+            <span class="admin-nav-icon">📑</span>
+            <span>Transactions</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_loans') }}">
+            <span class="admin-nav-icon">🏦</span>
+            <span>Loans</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_cheques') }}">
+            <span class="admin-nav-icon">🧾</span>
+            <span>Cheque Requests</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_reports') }}" class="active">
+            <span class="admin-nav-icon">📈</span>
+            <span>Reports &amp; Analytics</span>
+          </a>
+        </li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_audit_logs') }}">
+            <span class="admin-nav-icon">🔒</span>
+            <span>Audit Trail</span>
+          </a>
+        </li>
+        <li class="admin-nav-item nav-separator"></li>
+        <li class="admin-nav-item">
+          <a href="{{ url_for('main.admin_logout') }}" class="nav-logout">
+            <span class="admin-nav-icon">🚪</span>
+            <span>Logout</span>
+          </a>
+        </li>
+      </ul>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="admin-main-content">
+
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ 'success' if category == 'success' else 'error' if category == 'danger' or category == 'error' else 'warning' if category == 'warning' else 'info' }}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <!-- Page Header -->
+      <div class="page-header" style="margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <h1 class="page-title">Reports &amp; Analytics</h1>
+          <p class="page-subtitle">Aggregated platform analytics, operational summaries, and ledger reporting across banking operations.</p>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <a href="{{ url_for('main.admin_reports_print', start_date=start_date, end_date=end_date) }}" target="_blank" class="btn btn-outline btn-sm">
+            🖨️ Printable Report / PDF
+          </a>
+          <a href="{{ url_for('main.admin_audit_logs') }}" class="btn btn-secondary btn-sm">
+            🔒 Audit Logs
+          </a>
+        </div>
+      </div>
+
+      <!-- Date Filters & Export Controls Panel -->
+      <div class="report-controls-panel">
+        <div class="report-filters-bar">
+          <!-- Date Filter Form -->
+          <form method="GET" action="{{ url_for('main.admin_reports') }}" class="report-date-form">
+            <span style="font-size: 0.85rem; font-weight: 600; color: var(--color-primary);">Filter by Date:</span>
+            <div>
+              <label for="start_date" style="font-size: 0.75rem; color: var(--color-text-muted); display: block;">Start Date</label>
+              <input type="date" id="start_date" name="start_date" value="{{ start_date }}" class="report-date-input">
+            </div>
+            <div>
+              <label for="end_date" style="font-size: 0.75rem; color: var(--color-text-muted); display: block;">End Date</label>
+              <input type="date" id="end_date" name="end_date" value="{{ end_date }}" class="report-date-input">
+            </div>
+            <div style="align-self: flex-end;">
+              <button type="submit" class="btn btn-primary btn-sm">Apply Date Filter</button>
+              {% if start_date or end_date %}
+                <a href="{{ url_for('main.admin_reports') }}" class="btn btn-outline btn-sm" style="margin-left: 0.35rem;">Reset</a>
+              {% endif %}
+            </div>
+          </form>
+
+          <!-- Export Actions -->
+          <div class="export-actions-group">
+            <span style="font-size: 0.82rem; font-weight: 600; color: var(--color-text-muted);">Export CSV:</span>
+            <a href="{{ url_for('main.admin_export_csv', dataset='customers') }}" class="btn-export" title="Export sanitized customer directory">
+              📥 Customers
+            </a>
+            <a href="{{ url_for('main.admin_export_csv', dataset='transactions', start_date=start_date, end_date=end_date) }}" class="btn-export" title="Export transactions in selected date range">
+              📥 Transactions
+            </a>
+            <a href="{{ url_for('main.admin_export_csv', dataset='loans', start_date=start_date, end_date=end_date) }}" class="btn-export" title="Export loan portfolio">
+              📥 Loans
+            </a>
+            <a href="{{ url_for('main.admin_export_csv', dataset='cheques', start_date=start_date, end_date=end_date) }}" class="btn-export" title="Export cheque book requests">
+              📥 Cheques
+            </a>
+            <a href="{{ url_for('main.admin_export_csv', dataset='audit_logs', start_date=start_date, end_date=end_date) }}" class="btn-export" title="Export immutable audit trail">
+              📥 Audit Log
+            </a>
+          </div>
+        </div>
+
+        <!-- Report Generation Metadata -->
+        <div style="margin-top: 0.85rem; padding-top: 0.65rem; border-top: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+          <div class="report-meta-timestamp">
+            ⏱️ Report Generated: <strong>{{ report.generated_at }}</strong>
+          </div>
+          {% if start_date or end_date %}
+            <div style="font-size: 0.82rem; color: #1e40af; background: #eff6ff; padding: 0.2rem 0.6rem; border-radius: 4px; border: 1px solid #bfdbfe;">
+              Active Date Filter: <strong>{{ start_date or 'Beginning' }}</strong> &rarr; <strong>{{ end_date or 'Present' }}</strong>
+            </div>
+          {% else %}
+            <div style="font-size: 0.82rem; color: var(--color-text-muted);">
+              Displaying all-time cumulative banking records.
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- 1. Customer & Account Status Summary -->
+      <div style="margin-bottom: 1.5rem;">
+        <h2 style="font-size: 1.1rem; color: var(--color-primary); margin-bottom: 0.75rem;">1. Customer &amp; Account Status Overview</h2>
+        <div class="report-metrics-grid">
+          <div class="report-metric-card">
+            <span class="report-metric-title">Total Customers</span>
+            <span class="report-metric-value">{{ report.customers.total_registered }}</span>
+            <span class="report-metric-sub">Registered platform users</span>
+          </div>
+          <div class="report-metric-card">
+            <span class="report-metric-title">Active Accounts</span>
+            <span class="report-metric-value" style="color: #16a34a;">{{ report.customers.active_accounts }}</span>
+            <span class="report-metric-sub">Fully operational accounts</span>
+          </div>
+          <div class="report-metric-card">
+            <span class="report-metric-title">Pending Accounts</span>
+            <span class="report-metric-value" style="color: #d97706;">{{ report.customers.pending_accounts }}</span>
+            <span class="report-metric-sub">Awaiting admin review</span>
+          </div>
+          <div class="report-metric-card">
+            <span class="report-metric-title">Frozen Accounts</span>
+            <span class="report-metric-value" style="color: #0284c7;">{{ report.customers.frozen_accounts }}</span>
+            <span class="report-metric-sub">Operations suspended</span>
+          </div>
+          <div class="report-metric-card">
+            <span class="report-metric-title">Rejected Accounts</span>
+            <span class="report-metric-value" style="color: #dc2626;">{{ report.customers.rejected_accounts }}</span>
+            <span class="report-metric-sub">Registration denied</span>
+          </div>
+          <div class="report-metric-card">
+            <span class="report-metric-title">Closed Accounts</span>
+            <span class="report-metric-value" style="color: #64748b;">{{ report.customers.closed_accounts }}</span>
+            <span class="report-metric-sub">Permanently archived</span>
+          </div>
+          <div class="report-metric-card">
+            <span class="report-metric-title">Customer Deposits</span>
+            <span class="report-metric-value" style="font-size: 1.35rem;">{{ format_currency(report.customers.total_balance) }}</span>
+            <span class="report-metric-sub">Total system balance</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Transaction Activity & Flow Metrics -->
+      <div style="margin-bottom: 1.5rem;">
+        <h2 style="font-size: 1.1rem; color: var(--color-primary); margin-bottom: 0.75rem;">2. Transaction Activity &amp; Cash Flow</h2>
+        <div class="report-metrics-grid">
+          <div class="report-metric-card">
+            <span class="report-metric-title">Total Transactions</span>
+            <span class="report-metric-value">{{ report.transactions.total_count }}</span>
+            <span class="report-metric-sub">Completed within date filter</span>
+          </div>
+          <div class="report-metric-card">
+            <span class="report-metric-title">Total Deposits</span>
+            <span class="report-metric-value" style="color: #16a34a; font-size: 1.35rem;">+{{ format_currency(report.transactions.total_deposits) }}</span>
+            <span class="report-metric-sub">{{ report.transactions.deposit_count }} completed deposit ops</span>
+          </div>
+          <div class="report-metric-card">
+            <span class="report-metric-title">Total Withdrawals</span>
+            <span class="report-metric-value" style="color: #dc2626; font-size: 1.35rem;">-{{ format_currency(report.transactions.total_withdrawals) }}</span>
+            <span class="report-metric-sub">{{ report.transactions.withdrawal_count }} withdrawal operations</span>
+          </div>
+          <div class="report-metric-card">
+            <span class="report-metric-title">Total Transfers</span>
+            <span class="report-metric-value" style="color: #2563eb; font-size: 1.35rem;">{{ format_currency(report.transactions.total_transfers) }}</span>
+            <span class="report-metric-sub">{{ report.transactions.transfer_count }} counterpart transfers</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Loan Portfolio Summary -->
+      <div style="margin-bottom: 1.5rem;">
+        <h2 style="font-size: 1.1rem; color: var(--color-primary); margin-bottom: 0.75rem;">3. Credit &amp; Loan Portfolio Status</h2>
+        <div class="report-metrics-grid">
+          <div class="report-metric-card">
+            <span class="report-metric-title">Loan Applications</span>
+            <span class="report-metric-value">{{ report.loans.total_applications }}</span>
+            <span class="report-metric-sub">Total credit requests</span>
+          </div>
+          <div class="report-metric-card">
+            <span class="report-metric-title">Pending Loans</span>
+            <span class="report-metric-value" style="color: #d97706;">{{ report.loans.status_counts.Pending }}</span>
+            <span class="report-metric-sub">Pending credit decision</span>
+          </div>
+          <div class="report-metric-card">
+            <span class="report-metric-title">Approved / Active</span>
+            <span class="report-metric-value" style="color: #16a34a;">{{ report.loans.status_counts.Approved + report.loans.status_counts.Active }}</span>
+            <span class="report-metric-sub">{{ report.loans.status_counts.Approved }} approved, {{ report.loans.status_counts.Active }} active</span>
+          </div>
+          <div class="report-metric-card">
+            <span class="report-metric-title">Rejected Loans</span>
+            <span class="report-metric-value" style="color: #dc2626;">{{ report.loans.status_counts.Rejected }}</span>
+            <span class="report-metric-sub">Declined applications</span>
+          </div>
+          <div class="report-metric-card">
+            <span class="report-metric-title">Total Approved</span>
+            <span class="report-metric-value" style="font-size: 1.35rem; color: #16a34a;">{{ format_currency(report.loans.total_approved_amount) }}</span>
+            <span class="report-metric-sub">Avg: {{ format_currency(report.loans.average_approved_amount) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Cheque Book Requests Summary -->
+      <div style="margin-bottom: 1.5rem;">
+        <h2 style="font-size: 1.1rem; color: var(--color-primary); margin-bottom: 0.75rem;">4. Cheque Book Requests by Status</h2>
+        <div class="report-metrics-grid">
+          <div class="report-metric-card">
+            <span class="report-metric-title">Total Requests</span>
+            <span class="report-metric-value">{{ report.cheques.total_requests }}</span>
+            <span class="report-metric-sub">Customer submissions</span>
+          </div>
+          <div class="report-metric-card">
+            <span class="report-metric-title">Pending Orders</span>
+            <span class="report-metric-value" style="color: #d97706;">{{ report.cheques.status_counts.Pending }}</span>
+            <span class="report-metric-sub">Awaiting verification</span>
+          </div>
+          <div class="report-metric-card">
+            <span class="report-metric-title">Approved / In-Print</span>
+            <span class="report-metric-value" style="color: #2563eb;">{{ report.cheques.status_counts.Approved }}</span>
+            <span class="report-metric-sub">Queued for printing</span>
+          </div>
+          <div class="report-metric-card">
+            <span class="report-metric-title">Completed Orders</span>
+            <span class="report-metric-value" style="color: #16a34a;">{{ report.cheques.status_counts.Completed }}</span>
+            <span class="report-metric-sub">Dispatched / issued</span>
+          </div>
+          <div class="report-metric-card">
+            <span class="report-metric-title">Leaves Breakdown</span>
+            <span class="report-metric-value" style="font-size: 1rem; color: var(--color-primary);">
+              10: {{ report.cheques.leaves_breakdown[10] }} | 25: {{ report.cheques.leaves_breakdown[25] }} | 50: {{ report.cheques.leaves_breakdown[50] }}
+            </span>
+            <span class="report-metric-sub">Distribution of book leaf counts</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. Recent Transaction Records in Date Filter -->
+      <div class="report-section-box">
+        <div class="report-section-header">
+          <div>
+            <div class="report-section-title">Transactions in Scope ({{ report.transactions.total_count }} Records)</div>
+            <span style="font-size: 0.8rem; color: var(--color-text-muted);">Preview of transactions matching selected date boundaries.</span>
+          </div>
+          <a href="{{ url_for('main.admin_export_csv', dataset='transactions', start_date=start_date, end_date=end_date) }}" class="btn-export">
+            📥 Export CSV
+          </a>
+        </div>
+
+        {% if report.transactions.records %}
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Customer ID</th>
+                  <th>Type</th>
+                  <th>Amount</th>
+                  <th>Counterpart / Ref</th>
+                  <th>Date &amp; Time</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for tx in report.transactions.records %}
+                  <tr>
+                    <td><code>#TXN-{{ tx.transaction_id }}</code></td>
+                    <td><code>#{{ tx.customer_id }}</code></td>
+                    <td>
+                      <span class="badge-status status-{{ (tx.transaction_type or tx.type or 'completed')|lower }}">
+                        {{ tx.transaction_type or tx.type }}
+                      </span>
+                    </td>
+                    <td style="font-weight: 700;">
+                      {% if (tx.transaction_type or tx.type)|lower == 'deposit' %}
+                        <span style="color: #16a34a;">+{{ format_currency(tx.amount) }}</span>
+                      {% elif (tx.transaction_type or tx.type)|lower == 'withdrawal' %}
+                        <span style="color: #dc2626;">-{{ format_currency(tx.amount) }}</span>
+                      {% else %}
+                        <span>{{ format_currency(tx.amount) }}</span>
+                      {% endif %}
+                    </td>
+                    <td>{{ tx.reference_account or 'Internal Ledger' }}</td>
+                    <td style="font-size: 0.82rem; color: var(--color-text-muted);">{{ tx.timestamp }}</td>
+                    <td>
+                      <span class="badge-status status-{{ (tx.status or 'completed')|lower }}">
+                        {{ tx.status or 'Completed' }}
+                      </span>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div style="text-align: center; padding: 2.5rem 1rem; color: var(--color-text-muted);">
+            <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">🔍</div>
+            <div style="font-weight: 600; font-size: 1.05rem; color: var(--color-primary); margin-bottom: 0.25rem;">No Transactions Found</div>
+            <p style="font-size: 0.88rem;">No financial records match the specified date range. Try widening or resetting your date filters.</p>
+          </div>
+        {% endif %}
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bank-footer">
+    <div class="container footer-content">
+      <div>
+        <strong>CORE BANKING SYSTEM</strong> &mdash; Staff Administration &amp; Operational Analytics
+      </div>
+      <div class="footer-copy">
+        &copy; 2026 CORE BANKING SYSTEM. All rights reserved.
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

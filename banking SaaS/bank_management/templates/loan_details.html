@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loan Application {{ loan.application_id }} | CORE BANKING SYSTEM</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="bank-header">
+    <div class="nav-container">
+      <a href="{{ url_for('main.customer_dashboard') }}" class="bank-brand">
+        <div class="bank-logo-icon">B</div>
+        <div>
+          <div class="bank-brand-title">CORE BANKING SYSTEM</div>
+          <div class="bank-brand-tagline">Online Banking &bull; Customer Portal</div>
+        </div>
+      </a>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="{{ url_for('main.customer_dashboard') }}" class="nav-link">Dashboard</a></li>
+          <li><a href="{{ url_for('main.deposit') }}" class="nav-link">Deposit</a></li>
+          <li><a href="{{ url_for('main.withdraw') }}" class="nav-link">Withdraw</a></li>
+          <li><a href="{{ url_for('main.transfer') }}" class="nav-link">Transfer</a></li>
+          <li><a href="{{ url_for('main.transactions') }}" class="nav-link">Transactions</a></li>
+          <li><a href="{{ url_for('main.customer_loans') }}" class="nav-link active">Loans</a></li>
+          <li><a href="{{ url_for('main.customer_cheques') }}" class="nav-link">Cheque Book</a></li>
+          <li><a href="{{ url_for('main.change_password') }}" class="nav-link">Security</a></li>
+          <li><a href="{{ url_for('main.customer_logout') }}" class="nav-link nav-logout">Sign Out</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="page-container" style="max-width: 860px;">
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ 'success' if category == 'success' else 'error' if category == 'danger' or category == 'error' else 'warning' if category == 'warning' else 'info' }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Breadcrumb -->
+    <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+      <a href="{{ url_for('main.customer_loans') }}" class="btn btn-outline btn-sm">
+        &larr; Back to Loan Portfolio
+      </a>
+
+      {% if loan.status == 'Pending' %}
+        <form method="POST" action="{{ url_for('main.customer_cancel_loan', loan_id=loan.loan_id) }}" onsubmit="return confirm('Are you sure you want to cancel this pending loan application?');" style="margin: 0;">
+          <button type="submit" class="btn btn-outline btn-sm" style="color: #b91c1c; border-color: #fca5a5;">
+            ⊘ Cancel Application
+          </button>
+        </form>
+      {% endif %}
+    </div>
+
+    <!-- Loan Header Card -->
+    <div class="card" style="margin-bottom: 1.5rem;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.25rem;">
+            <h1 class="page-title" style="margin: 0; font-size: 1.55rem;">
+              {{ loan.loan_type }} Loan Facility
+            </h1>
+            {% if loan.status == 'Pending' %}
+              <span class="badge-status status-pending">⏳ Status: Pending Review</span>
+            {% elif loan.status == 'Approved' %}
+              <span class="badge-status status-active">✓ Status: Approved</span>
+            {% elif loan.status == 'Active' %}
+              <span class="badge-status status-active" style="background-color: #ecfdf5; color: #065f46;">&bull; Status: Active</span>
+            {% elif loan.status == 'Rejected' %}
+              <span class="badge-status status-rejected">✕ Status: Rejected</span>
+            {% elif loan.status == 'Cancelled' %}
+              <span class="badge-status status-closed">⊘ Status: Cancelled</span>
+            {% endif %}
+          </div>
+          <p style="color: var(--color-text-muted); font-size: 0.9rem;">
+            Reference ID: <strong>{{ loan.application_id }}</strong> &bull; Applied: <strong>{{ loan.application_date }}</strong>
+          </p>
+        </div>
+
+        <div style="text-align: right; background: #f8fafc; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 0.75rem 1.25rem;">
+          <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 600; color: var(--color-text-muted);">Requested Principal</div>
+          <div style="font-size: 1.75rem; font-weight: 800; color: var(--color-primary);">{{ format_currency(loan.requested_amount) }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Approved Terms & Repayment Breakdown (If Approved or Active) -->
+    {% if loan.status in ['Approved', 'Active'] and loan.approved_amount %}
+      <div class="card" style="border-left: 4px solid #059669; margin-bottom: 1.5rem;">
+        <div class="card-title">
+          <span>Approved Credit Terms &amp; Estimated Repayment</span>
+          <span class="badge badge-active">Authorized Facility</span>
+        </div>
+
+        <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-bottom: 1.25rem;">
+          Calculated using standard reducing-balance monthly amortization. <em>All figures represent non-binding estimates.</em>
+        </p>
+
+        <!-- EMI Highlights Grid -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.25rem;">
+          
+          <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: var(--radius-sm); padding: 1rem;">
+            <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #166534;">Estimated Monthly Instalment (EMI)</div>
+            <div style="font-size: 1.85rem; font-weight: 800; color: #15803d; margin-top: 0.25rem;">
+              {{ format_currency(loan.estimated_emi) }}
+            </div>
+            <div style="font-size: 0.75rem; color: #166534;">per month for {{ loan.approved_tenure_months }} months</div>
+          </div>
+
+          <div style="background: #f8fafc; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 1rem;">
+            <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--color-text-muted);">Approved Principal</div>
+            <div style="font-size: 1.45rem; font-weight: 700; color: var(--color-primary); margin-top: 0.25rem;">
+              {{ format_currency(loan.approved_amount) }}
+            </div>
+            <div style="font-size: 0.75rem; color: var(--color-text-muted);">Annual Rate: {{ loan.annual_interest_rate }}% p.a.</div>
+          </div>
+
+          <div style="background: #f8fafc; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 1rem;">
+            <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--color-text-muted);">Total Repayment Amount</div>
+            <div style="font-size: 1.45rem; font-weight: 700; color: var(--color-primary); margin-top: 0.25rem;">
+              {{ format_currency(loan.total_repayment) }}
+            </div>
+            <div style="font-size: 0.75rem; color: var(--color-text-muted);">Est. Total Interest: {{ format_currency(loan.total_interest) }}</div>
+          </div>
+
+        </div>
+
+        <!-- Approval Audit Note -->
+        <div style="font-size: 0.85rem; color: var(--color-text-muted); padding: 0.75rem; background: #f8fafc; border-radius: var(--radius-sm);">
+          <strong>Underwriter Decision Date:</strong> {{ loan.admin_decision_date or 'Recent' }} &bull; 
+          <strong>Notes:</strong> {{ loan.admin_notes or 'Application approved.' }}
+        </div>
+      </div>
+    {% elif loan.status == 'Pending' %}
+      <div class="alert alert-info" style="margin-bottom: 1.5rem;">
+        ⏳ <strong>Application Under Review:</strong> Your request is currently queued for credit underwriting assessment. Once an administrator approves the application, your approved amount, annual interest rate, and calculated EMI schedule will display here.
+      </div>
+    {% elif loan.status == 'Rejected' %}
+      <div class="alert alert-error" style="margin-bottom: 1.5rem;">
+        ✕ <strong>Application Declined:</strong> This credit application was not approved.
+        <div style="margin-top: 0.5rem; font-size: 0.9rem;">
+          <strong>Reason for Decision:</strong> {{ loan.rejection_reason or 'Eligibility criteria not met.' }}
+        </div>
+      </div>
+    {% elif loan.status == 'Cancelled' %}
+      <div class="alert alert-warning" style="margin-bottom: 1.5rem;">
+        ⊘ <strong>Application Cancelled:</strong> This loan request was voluntarily withdrawn by the applicant.
+      </div>
+    {% endif %}
+
+    <!-- Application Profile Specifications -->
+    <div class="card">
+      <div class="card-title">Application Specifications</div>
+
+      <table class="bank-table" style="font-size: 0.9rem;">
+        <tbody>
+          <tr>
+            <td style="color: var(--color-text-muted); width: 35%;">Application Reference</td>
+            <td><strong>{{ loan.application_id }}</strong></td>
+          </tr>
+          <tr>
+            <td style="color: var(--color-text-muted);">Applicant Name</td>
+            <td><strong>{{ loan.customer_name }}</strong></td>
+          </tr>
+          <tr>
+            <td style="color: var(--color-text-muted);">Facility Type</td>
+            <td><span class="badge badge-type">{{ loan.loan_type }} Loan</span></td>
+          </tr>
+          <tr>
+            <td style="color: var(--color-text-muted);">Requested Amount</td>
+            <td><strong class="balance-cell">{{ format_currency(loan.requested_amount) }}</strong></td>
+          </tr>
+          <tr>
+            <td style="color: var(--color-text-muted);">Requested Tenure</td>
+            <td>{{ loan.tenure_months }} Months</td>
+          </tr>
+          <tr>
+            <td style="color: var(--color-text-muted);">Declared Monthly Income</td>
+            <td>{{ format_currency(loan.monthly_income) }}/month</td>
+          </tr>
+          <tr>
+            <td style="color: var(--color-text-muted);">Stated Purpose</td>
+            <td>{{ loan.purpose }}</td>
+          </tr>
+          <tr>
+            <td style="color: var(--color-text-muted);">Application Timestamp</td>
+            <td>{{ loan.application_date }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bank-footer">
+    <div class="nav-container" style="justify-content: center;">
+      <p><strong>CORE BANKING SYSTEM</strong> &bull; Secured Retail Lending &amp; Credit Operations</p>
+    </div>
+  </footer>
+
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Registration | CORE BANKING SYSTEM</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="bank-header">
+    <div class="nav-container">
+      <a href="{{ url_for('main.index') }}" class="bank-brand">
+        <div class="bank-logo-icon">B</div>
+        <div>
+          <div class="bank-brand-title">CORE BANKING SYSTEM</div>
+          <div class="bank-brand-tagline">Customer Registration</div>
+        </div>
+      </a>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="{{ url_for('main.index') }}" class="nav-link">Home</a></li>
+          <li><a href="{{ url_for('main.customers_list') }}" class="nav-link">Directory</a></li>
+          <li><a href="{{ url_for('main.customer_login') }}" class="nav-link">Customer Login</a></li>
+          <li><a href="{{ url_for('main.customer_register') }}" class="nav-link active">Register</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="page-container">
+    <div class="auth-wrapper">
+      
+      <!-- Registration Card -->
+      <div class="auth-card">
+        <div class="auth-header">
+          <span class="auth-badge customer-badge">Customer Portal</span>
+          <h1 class="auth-title">Open a Bank Account</h1>
+          <p class="auth-subtitle">Create your personal banking profile to access secure online banking.</p>
+        </div>
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ 'success' if category == 'success' else 'error' if category == 'danger' or category == 'error' else 'warning' if category == 'warning' else 'info' }}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- Error list -->
+        {% if errors %}
+          <div class="alert alert-error">
+            <strong>⚠️ Registration Failed:</strong>
+            <ul class="error-list">
+              {% for error in errors %}
+                <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('main.customer_register') }}" class="auth-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          
+          <div class="form-group">
+            <label class="form-label" for="name">Full Legal Name *</label>
+            <input type="text" id="name" name="name" class="form-input" placeholder="e.g. Eleanor Vance" value="{{ form_data.get('name', '') }}" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="age">Age (18+) *</label>
+              <input type="number" id="age" name="age" class="form-input" placeholder="31" min="18" max="120" value="{{ form_data.get('age', '') }}" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="account_type">Account Type *</label>
+              <select id="account_type" name="account_type" class="form-select">
+                <option value="Savings" {% if form_data.get('account_type') == 'Savings' %}selected{% endif %}>Savings Account</option>
+                <option value="Checking" {% if form_data.get('account_type') == 'Checking' %}selected{% endif %}>Checking Account</option>
+                <option value="Business" {% if form_data.get('account_type') == 'Business' %}selected{% endif %}>Business Account</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="email">Email Address *</label>
+            <input type="email" id="email" name="email" class="form-input" placeholder="eleanor.vance@example.com" value="{{ form_data.get('email', '') }}" required>
+            <span class="form-hint">Used for sign-in and duplicate account prevention.</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="phone">Phone Number *</label>
+            <input type="tel" id="phone" name="phone" class="form-input" placeholder="+1 (555) 234-5678" value="{{ form_data.get('phone', '') }}" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="password">Password *</label>
+              <input type="password" id="password" name="password" class="form-input" placeholder="Min. 6 characters" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="confirm_password">Confirm Password *</label>
+              <input type="password" id="confirm_password" name="confirm_password" class="form-input" placeholder="Repeat password" required>
+            </div>
+          </div>
+
+          <div class="concept-box" style="margin-top: 0.5rem; margin-bottom: 1rem; padding: 0.75rem 1rem; font-size: 0.82rem;">
+            <strong>ℹ️ Registration Notice:</strong> New accounts are assigned an initial status of <strong>Pending</strong> with an opening balance of <strong>$0.00</strong>.
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block">
+            Complete Registration
+          </button>
+        </form>
+
+        <div class="auth-footer">
+          <p>Already have an account? <a href="{{ url_for('main.customer_login') }}">Sign In to Online Banking &rarr;</a></p>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bank-footer">
+    <div class="nav-container" style="justify-content: center;">
+      <p><strong>CORE BANKING SYSTEM</strong> &bull; Secure Customer Registration</p>
+    </div>
+  </footer>
+
+</body>
+</html>

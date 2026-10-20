@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loan Application | CORE BANKING SYSTEM</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="bank-header">
+    <div class="nav-container">
+      <a href="{{ url_for('main.customer_dashboard') }}" class="bank-brand">
+        <div class="bank-logo-icon">B</div>
+        <div>
+          <div class="bank-brand-title">CORE BANKING SYSTEM</div>
+          <div class="bank-brand-tagline">Online Banking &bull; Customer Portal</div>
+        </div>
+      </a>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="{{ url_for('main.customer_dashboard') }}" class="nav-link">Dashboard</a></li>
+          <li><a href="{{ url_for('main.deposit') }}" class="nav-link">Deposit</a></li>
+          <li><a href="{{ url_for('main.withdraw') }}" class="nav-link">Withdraw</a></li>
+          <li><a href="{{ url_for('main.transfer') }}" class="nav-link">Transfer</a></li>
+          <li><a href="{{ url_for('main.transactions') }}" class="nav-link">Transactions</a></li>
+          <li><a href="{{ url_for('main.customer_loans') }}" class="nav-link active">Loans</a></li>
+          <li><a href="{{ url_for('main.customer_cheques') }}" class="nav-link">Cheque Book</a></li>
+          <li><a href="{{ url_for('main.change_password') }}" class="nav-link">Security</a></li>
+          <li><a href="{{ url_for('main.customer_logout') }}" class="nav-link nav-logout">Sign Out</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="page-container" style="max-width: 720px;">
+
+    <!-- Breadcrumb / Back Link -->
+    <div style="margin-bottom: 1rem;">
+      <a href="{{ url_for('main.customer_loans') }}" class="btn btn-outline btn-sm">
+        &larr; Back to Loan Portfolio
+      </a>
+    </div>
+
+    <!-- Error Alerts -->
+    {% if errors %}
+      <div class="alert alert-error">
+        <strong>⚠️ Please correct the following issues:</strong>
+        <ul class="error-list" style="margin-top: 0.5rem; padding-left: 1.25rem;">
+          {% for error in errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    <!-- Application Form Card -->
+    <div class="card">
+      <div class="card-title">
+        <span>Loan Application Submission</span>
+        <span class="badge badge-warning">⏳ Initial Status: Pending</span>
+      </div>
+
+      <p style="color: var(--color-text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+        Complete the form below to apply for a retail or commercial credit facility. All newly submitted applications undergo administrative underwriting review.
+      </p>
+
+      <form action="{{ url_for('main.apply_loan') }}" method="POST" class="auth-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- 1. Loan Type Selection -->
+        <div class="form-group">
+          <label for="loan_type" class="form-label">Facility / Loan Type <span style="color: #b91c1c;">*</span></label>
+          <select name="loan_type" id="loan_type" class="form-input" required>
+            {% for lt in loan_types %}
+              <option value="{{ lt }}" {% if form_data.loan_type == lt %}selected{% endif %}>
+                {{ lt }} Loan
+              </option>
+            {% endfor %}
+          </select>
+          <small class="form-hint">Choose the credit classification that corresponds to your financing objective.</small>
+        </div>
+
+        <!-- 2. Requested Amount -->
+        <div class="form-group">
+          <label for="requested_amount" class="form-label">Requested Loan Amount ($ USD) <span style="color: #b91c1c;">*</span></label>
+          <input
+            type="number"
+            step="0.01"
+            min="100"
+            max="1000000"
+            name="requested_amount"
+            id="requested_amount"
+            class="form-input"
+            value="{{ form_data.requested_amount }}"
+            placeholder="e.g. 15000.00"
+            required
+          >
+          <small class="form-hint">Enter the principal balance you require (minimum $100.00, maximum $1,000,000.00).</small>
+        </div>
+
+        <!-- 3. Tenure in Months -->
+        <div class="form-group">
+          <label for="tenure_months" class="form-label">Loan Repayment Tenure (Months) <span style="color: #b91c1c;">*</span></label>
+          <input
+            type="number"
+            min="1"
+            max="360"
+            name="tenure_months"
+            id="tenure_months"
+            class="form-input"
+            value="{{ form_data.tenure_months }}"
+            placeholder="e.g. 24"
+            required
+          >
+          <small class="form-hint">Duration in whole months over which the facility will be amortized (1 to 360 months).</small>
+        </div>
+
+        <!-- 4. Monthly Income -->
+        <div class="form-group">
+          <label for="monthly_income" class="form-label">Verifiable Monthly Income ($ USD) <span style="color: #b91c1c;">*</span></label>
+          <input
+            type="number"
+            step="0.01"
+            min="1"
+            name="monthly_income"
+            id="monthly_income"
+            class="form-input"
+            value="{{ form_data.monthly_income }}"
+            placeholder="e.g. 5200.00"
+            required
+          >
+          <small class="form-hint">Your primary monthly take-home salary or enterprise net revenue.</small>
+        </div>
+
+        <!-- 5. Purpose of the Loan -->
+        <div class="form-group">
+          <label for="purpose" class="form-label">Purpose of the Loan <span style="color: #b91c1c;">*</span></label>
+          <textarea
+            name="purpose"
+            id="purpose"
+            class="form-input"
+            rows="3"
+            placeholder="Describe the detailed purpose or asset purchase intended with this financing..."
+            required
+          >{{ form_data.purpose }}</textarea>
+          <small class="form-hint">Minimum 3 characters. Be specific regarding asset acquisition or operational plans.</small>
+        </div>
+
+        <!-- Advisory Notice -->
+        <div style="background-color: #f8fafc; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 0.85rem 1rem; margin-bottom: 1.5rem; font-size: 0.85rem; color: var(--color-text-muted);">
+          ℹ️ <strong>Notice:</strong> Submitting this application will generate a unique application reference with initial status <strong>Pending</strong>. You can cancel pending applications at any time before administrative determination.
+        </div>
+
+        <!-- Submit & Cancel Buttons -->
+        <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+          <a href="{{ url_for('main.customer_loans') }}" class="btn btn-outline">Cancel</a>
+          <button type="submit" class="btn btn-primary" style="min-width: 180px;">
+            Submit Application &rarr;
+          </button>
+        </div>
+
+      </form>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bank-footer">
+    <div class="nav-container" style="justify-content: center;">
+      <p><strong>CORE BANKING SYSTEM</strong> &bull; Secured Retail Lending &amp; Credit Operations</p>
+    </div>
+  </footer>
+
+</body>
+</html>

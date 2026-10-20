@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>
+    {% if customer %}Customer #{{ customer.customer_id }} - {{ customer.name }}{% else %}Customer Not Found{% endif %} | CORE BANKING SYSTEM
+  </title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="bank-header">
+    <div class="nav-container">
+      <a href="{{ url_for('main.index') }}" class="bank-brand">
+        <div class="bank-logo-icon">B</div>
+        <div>
+          <div class="bank-brand-title">CORE BANKING SYSTEM</div>
+          <div class="bank-brand-tagline">Customer Details</div>
+        </div>
+      </a>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="{{ url_for('main.index') }}" class="nav-link">Home</a></li>
+          <li><a href="{{ url_for('main.customers_list') }}" class="nav-link active">Directory</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="page-container">
+
+    <!-- Navigation Breadcrumbs / Back Link -->
+    <div style="margin-bottom: 1.25rem;">
+      <a href="{{ url_for('main.customers_list') }}" class="btn btn-outline btn-sm">
+        &larr; Back to Customers Directory
+      </a>
+    </div>
+
+    {% if error_message %}
+      <!-- Customer Not Found / Invalid ID State -->
+      <div class="card" style="text-align: center; padding: 3rem 1.5rem;">
+        <div style="font-size: 2.5rem; margin-bottom: 1rem;">🔍</div>
+        <h2 style="color: var(--color-danger-text); margin-bottom: 0.5rem;">Customer Record Not Found</h2>
+        <p style="color: var(--color-text-muted); max-width: 500px; margin: 0 auto 1.5rem auto;">
+          {{ error_message }}
+        </p>
+        <div style="display: flex; gap: 0.75rem; justify-content: center;">
+          <a href="{{ url_for('main.customers_list') }}" class="btn btn-primary">
+            View All Customers
+          </a>
+          <a href="{{ url_for('main.index') }}" class="btn btn-outline">
+            Return to Home
+          </a>
+        </div>
+      </div>
+
+    {% elif customer %}
+      <!-- Customer Profile Details -->
+      <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <h1 class="page-title">{{ customer.name }}</h1>
+          <p class="page-subtitle">
+            Customer ID: #{{ customer.customer_id }} &bull; Account No: <span class="account-num">{{ customer.account_number }}</span>
+          </p>
+        </div>
+
+        <div>
+          {% if customer.is_active %}
+            <span class="badge badge-active" style="font-size: 0.95rem; padding: 0.35rem 0.85rem;">
+              &bull; Account Active
+            </span>
+          {% else %}
+            <span class="badge badge-inactive" style="font-size: 0.95rem; padding: 0.35rem 0.85rem;">
+              &bull; Account Inactive / Frozen
+            </span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Financial Overview Banner Card -->
+      <div class="metric-card accent" style="margin-bottom: 1.5rem;">
+        <div class="metric-label">Current Ledger Balance</div>
+        <div class="metric-value" style="color: #1e3a8a;">
+          {{ format_currency(customer.balance) }}
+        </div>
+      </div>
+
+      <!-- Account and Personal Details Card -->
+      <div class="card">
+        <h2 class="card-title">Account & Personal Information</h2>
+
+        <div class="details-grid">
+          <!-- Customer ID -->
+          <div class="details-group">
+            <span class="details-label">System Customer ID</span>
+            <span class="details-value">#{{ customer.customer_id }}</span>
+          </div>
+
+          <!-- Full Name -->
+          <div class="details-group">
+            <span class="details-label">Full Legal Name</span>
+            <span class="details-value">{{ customer.name }}</span>
+          </div>
+
+          <!-- Age -->
+          <div class="details-group">
+            <span class="details-label">Age</span>
+            <span class="details-value">{{ customer.age }} years</span>
+          </div>
+
+          <!-- Email Address -->
+          <div class="details-group">
+            <span class="details-label">Email Address</span>
+            <span class="details-value">
+              <a href="mailto:{{ customer.email }}" style="color: var(--color-accent); text-decoration: none;">
+                {{ customer.email }}
+              </a>
+            </span>
+          </div>
+
+          <!-- Phone Number -->
+          <div class="details-group">
+            <span class="details-label">Phone Number</span>
+            <span class="details-value">{{ customer.phone }}</span>
+          </div>
+
+          <!-- Account Number -->
+          <div class="details-group">
+            <span class="details-label">Account Number</span>
+            <span class="details-value account-num" style="display: inline-block; width: fit-content;">
+              {{ customer.account_number }}
+            </span>
+          </div>
+
+          <!-- Account Type -->
+          <div class="details-group">
+            <span class="details-label">Account Type</span>
+            <span class="details-value">{{ customer.account_type }} Account</span>
+          </div>
+
+          <!-- Current Balance -->
+          <div class="details-group">
+            <span class="details-label">Recorded Balance</span>
+            <span class="details-value">{{ format_currency(customer.balance) }}</span>
+          </div>
+
+          <!-- Account Status -->
+          <div class="details-group">
+            <span class="details-label">Account Status</span>
+            <span class="details-value">
+              {% if customer.is_active %}
+                <span style="color: var(--color-success-text); font-weight: 700;">Active</span>
+              {% else %}
+                <span style="color: var(--color-danger-text); font-weight: 700;">Inactive (Restricted)</span>
+              {% endif %}
+            </span>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bank-footer">
+    <div class="nav-container" style="justify-content: center;">
+      <p><strong>CORE BANKING SYSTEM</strong> &bull; Customer Account Details</p>
+    </div>
+  </footer>
+
+</body>
+</html>

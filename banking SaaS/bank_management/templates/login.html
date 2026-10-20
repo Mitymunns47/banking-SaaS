@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Login | CORE BANKING SYSTEM</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="bank-header">
+    <div class="nav-container">
+      <a href="{{ url_for('main.index') }}" class="bank-brand">
+        <div class="bank-logo-icon">B</div>
+        <div>
+          <div class="bank-brand-title">CORE BANKING SYSTEM</div>
+          <div class="bank-brand-tagline">Customer Sign In</div>
+        </div>
+      </a>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="{{ url_for('main.index') }}" class="nav-link">Home</a></li>
+          <li><a href="{{ url_for('main.customers_list') }}" class="nav-link">Directory</a></li>
+          <li><a href="{{ url_for('main.customer_login') }}" class="nav-link active">Customer Login</a></li>
+          <li><a href="{{ url_for('main.admin_login') }}" class="nav-link">Admin Portal</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="page-container">
+    <div class="auth-wrapper">
+
+      <!-- Customer Login Card -->
+      <div class="auth-card customer-auth-theme">
+        <div class="auth-header">
+          <span class="auth-badge customer-badge">Personal Banking</span>
+          <h1 class="auth-title">Customer Sign In</h1>
+          <p class="auth-subtitle">Log in to view your accounts, balance, and banking services.</p>
+        </div>
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ 'success' if category == 'success' else 'error' if category == 'danger' or category == 'error' else 'warning' if category == 'warning' else 'info' }}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- Generic Authentication Error -->
+        {% if error_message %}
+          <div class="alert alert-error">
+            <strong>⚠️ Access Denied:</strong> {{ error_message }}
+          </div>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('main.customer_login', next=request.args.get('next')) }}" class="auth-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="form-group">
+            <label class="form-label" for="email">Account Email Address</label>
+            <input type="email" id="email" name="email" class="form-input" placeholder="e.g. sarah.jenkins@bankcorp.com" value="{{ email_entered }}" required autofocus>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="password">Password</label>
+            <input type="password" id="password" name="password" class="form-input" placeholder="Enter your password" required>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block">
+            Sign In to Dashboard &rarr;
+          </button>
+        </form>
+
+        <!-- Demo credentials box for learning ease -->
+        <div class="demo-credentials-box">
+          <div class="demo-credentials-title">🔑 Demo Customer Credentials:</div>
+          <p><strong>Email:</strong> <code>sarah.jenkins@bankcorp.com</code></p>
+          <p><strong>Password:</strong> <code>Password123</code></p>
+          <span style="font-size: 0.75rem; color: var(--color-text-muted);">
+            (Or register a new account to test the registration flow!)
+          </span>
+        </div>
+
+        <div class="auth-footer">
+          <p>Don't have an account yet? <a href="{{ url_for('main.customer_register') }}">Register for online banking</a></p>
+          <div style="margin-top: 0.75rem; border-top: 1px dashed var(--color-border); padding-top: 0.75rem;">
+            <a href="{{ url_for('main.admin_login') }}" style="color: var(--color-text-muted); font-size: 0.85rem;">
+              🏦 Bank Employee / Staff Administrator Login &rarr;
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bank-footer">
+    <div class="nav-container" style="justify-content: center;">
+      <p><strong>CORE BANKING SYSTEM</strong> &bull; Secure Customer Portal</p>
+    </div>
+  </footer>
+
+</body>
+</html>
